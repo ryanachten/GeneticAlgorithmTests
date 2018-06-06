@@ -33,10 +33,10 @@ class Vehicle {
     // scale to maximum speed - *p5* desired.setMag(this.maxspeed);
       // .setMag() - Set the magnitude of this vector to the value
     desired.normalize();
-    desired.multiplyScalar(this.maxSpeed);
+    desired.setLength(this.maxSpeed);
     // steering = desired minus velocity
     const steer = desired.sub(this.velocity);
-    steer.clampLength(0, this.maxSpeed);
+    // steer.clampLength(0, this.maxForce);
 
     this.applyForce(steer);
   }

@@ -24,7 +24,7 @@ function init() {
   container = document.createElement( 'div' );
   document.body.appendChild( container );
 
-  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
+  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 3000 );
   camera.position.set( 100, 200, 300 );
 
   controls = new THREE.OrbitControls( camera );
@@ -74,7 +74,7 @@ function init() {
       0,
       Math.random()*(groundSize/2),
     );
-  }, 2000);
+  }, 5000);
 
   // model
   var loader = new THREE.FBXLoader();
@@ -128,18 +128,19 @@ function onWindowResize() {
 
 }
 
-//
 
 function animate() {
 
   requestAnimationFrame( animate );
 
+  // Update animation
   if ( mixers.length > 0 ) {
     for ( var i = 0; i < mixers.length; i ++ ) {
       mixers[ i ].update( clock.getDelta() );
     }
   }
 
+  // Get object distance from target
   const xDistance = Math.abs(vehicle.position.x - target.position.x);
   const zDistance = Math.abs(vehicle.position.y - target.position.z);
 
@@ -151,7 +152,15 @@ function animate() {
       vehicle.seek(new THREE.Vector2(target.position.x, target.position.z));
       vehicle.update();
       object.position.set(vehicle.position.x, 0, vehicle.position.y);
-      object.lookAt(target.position);
+
+      // Rotate towards target
+      // based off: https://stackoverflow.com/a/12800621/4757903
+      const qstart = new THREE.Quaternion();
+      const qend = new THREE.Quaternion();
+      const m  = new THREE.Matrix4();
+      qstart.setFromRotationMatrix( object.matrixWorld );
+      qend.setFromRotationMatrix( m.lookAt( target.position, object.position, new THREE.Vector3( 0, 1, 0 ) ) );
+      object.setRotationFromQuaternion( qstart.slerp(qend, 0.015 ) );
   }
 
 

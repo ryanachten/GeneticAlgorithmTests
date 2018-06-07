@@ -1,8 +1,9 @@
 // Based on Shiffman's class: https://github.com/shiffman/The-Nature-of-Code-Examples-p5.js/blob/master/chp06_agents/NOC_6_01_Seek/vehicle.js
 
 class Vehicle {
-  constructor(x, y) {
+  constructor(model, x, y) {
 
+    this.model = model;
     this.acceleration = new THREE.Vector2( 0, 0 );
     this.velocity = new THREE.Vector2( 0, 1 );
     this.position = new THREE.Vector2( x, y );
@@ -27,8 +28,34 @@ class Vehicle {
     this.acceleration.add(force);
   }
 
+  eat(list){
+    // Iterate through list and find the closest item
+    let record = Infinity;
+    let closestIndex = null;
+    let i;
+    for ( i = 0; i < list.length; i++) {
+      const listPos = new THREE.Vector2(list[i].position.x, list[i].position.z);
+      const distance = this.position.distanceTo(listPos);
+      if (distance < record) {
+        record = distance;
+        closestIndex = i;
+      }
+    }
+    // Seek closest list item
+    this.seek(new THREE.Vector2(
+      list[closestIndex].position.x,
+      list[closestIndex].position.z)
+    );
+    if (record < 5) {
+      scene.remove(food[closestIndex]);
+      food.splice(closestIndex, 1);
+    }
+  }
+
   // Calculate steering force towards target
+  // **params** target: Vector2 position
   seek(target){
+    this.model.lookAt(target.x, 0, target.y);
     let desired = target.sub(this.position);
     // scale to maximum speed - *p5* desired.setMag(this.maxspeed);
       // .setMag() - Set the magnitude of this vector to the value
@@ -39,5 +66,10 @@ class Vehicle {
     // steer.clampLength(0, this.maxForce);
 
     this.applyForce(steer);
+  }
+
+  display(){
+      this.model.position.set(this.position.x, 0, this.position.y);
+      //
   }
 }

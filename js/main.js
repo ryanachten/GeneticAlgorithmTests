@@ -12,19 +12,19 @@ let object;
 let target;
 const groundSize = 2000;
 
+const food = [];
+
 init();
 animate();
 
 function init() {
 
   // Vehicle driver for GA
-  vehicle = new Vehicle(0, -800);
-
 
   container = document.createElement( 'div' );
   document.body.appendChild( container );
 
-  camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 3000 );
+  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 3000 );
   camera.position.set( 100, 200, 300 );
 
   controls = new THREE.OrbitControls( camera );
@@ -65,18 +65,29 @@ function init() {
   scene.add( grid );
 
   // setup target for GE to find
-  target = new THREE.Mesh( new THREE.SphereGeometry( 5, 32, 32 ), new THREE.MeshPhongMaterial( { color: 0x000000 } ));
-  target.position.set(-500, 0, 0);
-  scene.add(target);
-  setInterval(function () {
-    target.position.set(
-      Math.random()*(groundSize/2),
-      0,
-      Math.random()*(groundSize/2),
-    );
-  }, 5000);
+    // target = new THREE.Mesh( new THREE.SphereGeometry( 5, 32, 32 ), new THREE.MeshPhongMaterial( { color: 0x000000 } ));
+    // target.position.set(-500, 0, 0);
+    // scene.add(target);
+    // setInterval(function () {
+    //   target.position.set(
+    //     Math.random() * groundSize - groundSize/2,
+    //     0,
+    //     Math.random() * groundSize - groundSize/2
+    //   );
+    // }, 5000);
 
-  // model
+  // distribute intial food
+  const foodSize = 10;
+  for (var i = 0; i < 10; i++) {
+    const x = Math.random() * groundSize - groundSize/2;
+    const z = Math.random() * groundSize - groundSize/2;
+    const foodObj = new THREE.Mesh( new THREE.BoxGeometry( foodSize, foodSize, foodSize ), new THREE.MeshPhongMaterial( { color: 0x69c49f } ));
+    foodObj.position.set(x, foodSize, z);
+    scene.add(foodObj);
+    food.push( foodObj );
+  }
+
+  // load fbx model and store animation
   var loader = new THREE.FBXLoader();
   loader.load( 'models/Walking.fbx', function ( model ) {
 
@@ -91,19 +102,15 @@ function init() {
     action.play();
 
     object.traverse( function ( child ) {
-
       if ( child.isMesh ) {
-
         child.castShadow = true;
         child.receiveShadow = true;
-
       }
+    });
 
-    } );
-
+    vehicle = new Vehicle(object, 0, -800);
     scene.add( object );
-
-  } );
+  });
 
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setPixelRatio( window.devicePixelRatio );
@@ -140,27 +147,24 @@ function animate() {
     }
   }
 
-  // Get object distance from target
-  const xDistance = Math.abs(vehicle.position.x - target.position.x);
-  const zDistance = Math.abs(vehicle.position.y - target.position.z);
-
 
   if (object //Make sure object has loaded
-      // Only move if the object is within distance
-      && xDistance > 1 && zDistance > 1
+      // Only move if there is food
+      && food.length > 0
     ) {
-      vehicle.seek(new THREE.Vector2(target.position.x, target.position.z));
+      // vehicle.seek(new THREE.Vector2(target.position.x, target.position.z));
+      vehicle.eat(food);
       vehicle.update();
-      object.position.set(vehicle.position.x, 0, vehicle.position.y);
+      vehicle.display();
 
       // Rotate towards target
-      // based off: https://stackoverflow.com/a/12800621/4757903
-      const qstart = new THREE.Quaternion();
-      const qend = new THREE.Quaternion();
-      const m  = new THREE.Matrix4();
-      qstart.setFromRotationMatrix( object.matrixWorld );
-      qend.setFromRotationMatrix( m.lookAt( target.position, object.position, new THREE.Vector3( 0, 1, 0 ) ) );
-      object.setRotationFromQuaternion( qstart.slerp(qend, 0.015 ) );
+      // // based off: https://stackoverflow.com/a/12800621/4757903
+      // const qstart = new THREE.Quaternion();
+      // const qend = new THREE.Quaternion();
+      // const m  = new THREE.Matrix4();
+      // qstart.setFromRotationMatrix( object.matrix );
+      // qend.setFromRotationMatrix( m.lookAt( target.position, object.position, new THREE.Vector3( 0, 1, 0 ) ) );
+      // object.setRotationFromQuaternion( qstart.slerp(qend, 0.1 ) ); //0.015
   }
 
 

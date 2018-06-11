@@ -7,8 +7,14 @@ class Vehicle {
     this.acceleration = new THREE.Vector2( 0, 0 );
     this.velocity = new THREE.Vector2( 0, 1 );
     this.position = new THREE.Vector2( x, y );
-    this.maxSpeed = 2;
-    this.maxForce = 0.2;
+    this.maxSpeed = 3;
+    this.maxForce = 0.8;
+
+    //normalised behaviour weightings
+    this.dna = [
+      Math.random(), //food
+      Math.random() //poison
+    ];
   }
 
   // Method to update vehicle location
@@ -21,6 +27,9 @@ class Vehicle {
     this.position.add(this.velocity);
     // reset acceleration to 0 ea. cycle
     this.acceleration.multiplyScalar(0);
+
+    // Rotate model to face direction
+    this.model.lookAt(this.position.x, 0 , this.position.y);
   }
 
   applyForce(force){
@@ -28,10 +37,29 @@ class Vehicle {
     this.acceleration.add(force);
   }
 
+  // Applys weighting based on DNA to object steering
+  // Good and bad refer to opposing forces (i.e. food and poison)
+  behaviors(good, bad){
+    const steerGood = this.eat(good);
+    const steerBad = this.eat(bad);
+
+    // console.log(steerGood, steerBad);
+
+    steerGood.multiplyScalar(this.dna[0]);
+    steerBad.multiplyScalar(this.dna[1]);
+
+    // console.log(steerGood, steerBad);
+
+    // debugger;
+
+    this.applyForce(steerGood);
+    this.applyForce(steerBad);
+  }
+
   eat(list){
     // Iterate through list and find the closest item
     let record = Infinity;
-    let closestIndex = null;
+    let closestIndex = -1;
     let i;
     for ( i = 0; i < list.length; i++) {
       const listPos = new THREE.Vector2(list[i].position.x, list[i].position.z);
@@ -41,21 +69,29 @@ class Vehicle {
         closestIndex = i;
       }
     }
-    // Seek closest list item
-    this.seek(new THREE.Vector2(
-      list[closestIndex].position.x,
-      list[closestIndex].position.z)
-    );
-    if (record < 5) {
-      scene.remove(food[closestIndex]);
-      food.splice(closestIndex, 1);
+
+    // If the closest item is within a given radius
+    // 'eat' amd remove the item
+    if (record < 3) {
+      scene.remove(list[closestIndex]);
+      list.splice(closestIndex, 1);
     }
+    // Otherwise return closest item vector
+    else if(closestIndex > -1) {
+      return this.seek(new THREE.Vector2(
+        list[closestIndex].position.x,
+        list[closestIndex].position.z)
+      );
+    }
+
+    // If nothing left to seek, return 0 vector
+    return new THREE.Vector2(0, 0);
   }
 
   // Calculate steering force towards target
   // **params** target: Vector2 position
   seek(target){
-    this.model.lookAt(target.x, 0, target.y);
+
     let desired = target.sub(this.position);
     // scale to maximum speed - *p5* desired.setMag(this.maxspeed);
       // .setMag() - Set the magnitude of this vector to the value
@@ -63,13 +99,13 @@ class Vehicle {
     desired.setLength(this.maxSpeed);
     // steering = desired minus velocity
     const steer = desired.sub(this.velocity);
-    // steer.clampLength(0, this.maxForce);
+    steer.clampLength(0, this.maxForce);
 
-    this.applyForce(steer);
+    // Return steering force vector
+    return steer;
   }
 
   display(){
       this.model.position.set(this.position.x, 0, this.position.y);
-      //
   }
 }

@@ -13,6 +13,7 @@ let target;
 const groundSize = 2000;
 
 const food = [];
+const poison = [];
 
 init();
 animate();
@@ -65,26 +66,36 @@ function init() {
   scene.add( grid );
 
   // setup target for GE to find
-    // target = new THREE.Mesh( new THREE.SphereGeometry( 5, 32, 32 ), new THREE.MeshPhongMaterial( { color: 0x000000 } ));
-    // target.position.set(-500, 0, 0);
-    // scene.add(target);
-    // setInterval(function () {
-    //   target.position.set(
-    //     Math.random() * groundSize - groundSize/2,
-    //     0,
-    //     Math.random() * groundSize - groundSize/2
-    //   );
-    // }, 5000);
+  //   target = new THREE.Mesh( new THREE.SphereGeometry( 5, 32, 32 ), new THREE.MeshPhongMaterial( { color: 0x000000 } ));
+  //   target.position.set(-500, 0, 0);
+  //   scene.add(target);
+  //   setInterval(function () {
+  //     target.position.set(
+  //       Math.random() * groundSize - groundSize/2,
+  //       0,
+  //       Math.random() * groundSize - groundSize/2
+  //     );
+  //   }, 5000);
 
   // distribute intial food
   const foodSize = 10;
   for (var i = 0; i < 10; i++) {
     const x = Math.random() * groundSize - groundSize/2;
     const z = Math.random() * groundSize - groundSize/2;
-    const foodObj = new THREE.Mesh( new THREE.BoxGeometry( foodSize, foodSize, foodSize ), new THREE.MeshPhongMaterial( { color: 0x69c49f } ));
+    const foodObj = new THREE.Mesh( new THREE.BoxGeometry( foodSize, foodSize, foodSize ), new THREE.MeshPhongMaterial( { color: 0x00B99A } ));
     foodObj.position.set(x, foodSize, z);
     scene.add(foodObj);
     food.push( foodObj );
+  }
+
+  const poisonSize = 10;
+  for (var i = 0; i < 10; i++) {
+    const x = Math.random() * groundSize - groundSize/2;
+    const z = Math.random() * groundSize - groundSize/2;
+    const poisonObj = new THREE.Mesh( new THREE.BoxGeometry( poisonSize, poisonSize, poisonSize ), new THREE.MeshPhongMaterial( { color: 0xFF6F91 } ));
+    poisonObj.position.set(x, poisonSize, z);
+    scene.add(poisonObj);
+    poison.push( poisonObj );
   }
 
   // load fbx model and store animation
@@ -147,24 +158,13 @@ function animate() {
     }
   }
 
-
   if (object //Make sure object has loaded
       // Only move if there is food
       && food.length > 0
     ) {
-      // vehicle.seek(new THREE.Vector2(target.position.x, target.position.z));
-      vehicle.eat(food);
+      vehicle.behaviors(food, poison);
       vehicle.update();
       vehicle.display();
-
-      // Rotate towards target
-      // // based off: https://stackoverflow.com/a/12800621/4757903
-      // const qstart = new THREE.Quaternion();
-      // const qend = new THREE.Quaternion();
-      // const m  = new THREE.Matrix4();
-      // qstart.setFromRotationMatrix( object.matrix );
-      // qend.setFromRotationMatrix( m.lookAt( target.position, object.position, new THREE.Vector3( 0, 1, 0 ) ) );
-      // object.setRotationFromQuaternion( qstart.slerp(qend, 0.1 ) ); //0.015
   }
 
 

@@ -10,6 +10,8 @@ class Vehicle {
     this.maxSpeed = 3;
     this.maxForce = 0.8;
 
+    this.health = 1;
+
     //normalised behaviour weightings
     this.dna = [
       Math.random(), //food
@@ -19,6 +21,8 @@ class Vehicle {
 
   // Method to update vehicle location
   update(){
+    // health declines each frame
+    this.health -= 0.001;
     // update velocity
     this.velocity.add(this.acceleration);
     // limit speed
@@ -27,9 +31,6 @@ class Vehicle {
     this.position.add(this.velocity);
     // reset acceleration to 0 ea. cycle
     this.acceleration.multiplyScalar(0);
-
-    // Rotate model to face direction
-    this.model.lookAt(this.position.x, 0 , this.position.y);
   }
 
   applyForce(force){
@@ -40,23 +41,17 @@ class Vehicle {
   // Applys weighting based on DNA to object steering
   // Good and bad refer to opposing forces (i.e. food and poison)
   behaviors(good, bad){
-    const steerGood = this.eat(good);
-    const steerBad = this.eat(bad);
-
-    // console.log(steerGood, steerBad);
+    const steerGood = this.eat(good, 0.1);
+    const steerBad = this.eat(bad, -0.1);
 
     steerGood.multiplyScalar(this.dna[0]);
     steerBad.multiplyScalar(this.dna[1]);
-
-    // console.log(steerGood, steerBad);
-
-    // debugger;
 
     this.applyForce(steerGood);
     this.applyForce(steerBad);
   }
 
-  eat(list){
+  eat(list, nutrition){
     // Iterate through list and find the closest item
     let record = Infinity;
     let closestIndex = -1;
@@ -75,6 +70,9 @@ class Vehicle {
     if (record < 3) {
       scene.remove(list[closestIndex]);
       list.splice(closestIndex, 1);
+
+      // health of vehicle goes up/down based on what they 'ate'
+      this.health += nutrition;
     }
     // Otherwise return closest item vector
     else if(closestIndex > -1) {
@@ -105,7 +103,23 @@ class Vehicle {
     return steer;
   }
 
+  // Vehicle 'dies' is health is less than 0
+  dead(){
+    return (this.health < 0)
+  }
+
+  // Determine how vehicle model should be displayed
   display(){
-      this.model.position.set(this.position.x, 0, this.position.y);
+    // Rotate model to face direction
+    this.model.lookAt(this.position.x, 0 , this.position.y);
+
+    // Position model based on vehicle position
+    this.model.position.set(this.position.x, 0, this.position.y);
+
+    // Update colour of model based on health
+    this.model.materials.map( (material) => {
+      material.color.g = this.health;
+      material.color.r = 1-this.health;
+    });
   }
 }

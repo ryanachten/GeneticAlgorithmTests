@@ -121,10 +121,23 @@ function init() {
 // Add add mixers and actions based on stored clip, add model to scene
 function createVehicle(model){
 
+  // Set initial random position for model
   const x = Math.random() * groundSize - groundSize/2;
   const z = Math.random() * groundSize - groundSize/2;
   model.position.set(x, 0, z);
 
+  // Store materials on model to reflect health status
+  model.materials = [];
+  model.traverse( (child) => {
+    if (child instanceof THREE.Mesh) {
+      // Set green to full (i.e. health starts at 100%)
+      child.material.color = new THREE.Color(0, 1, 1);
+      model.materials.push(child.material);
+    }
+  });
+
+
+  // Create vehicle based on model
   const vehicle = new Vehicle(model, x, z);
   vehicles.push(vehicle);
 
@@ -146,13 +159,21 @@ function animate() {
 
   requestAnimationFrame( animate );
 
-  // Iterate through vehicle collection
-  if (vehicles.length > 0) {
+  // If vehicles are loaded and food or poison are still available
+  if (vehicles.length > 0 && (food.length > 0 || poison.length > 0)) {
+
+    // Update model animation
     mixer.update( clock.getDelta() );
+
+    // Update vehicles
     vehicles.map( (vehicle) => {
-      vehicle.behaviors(food, poison);
-      vehicle.update();
-      vehicle.display();
+      if (!vehicle.dead()) {
+        vehicle.behaviors(food, poison);
+        vehicle.update();
+        vehicle.display();
+      }else{
+        // Stop animation
+      }
     });
   }
 

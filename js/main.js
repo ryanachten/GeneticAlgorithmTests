@@ -11,7 +11,7 @@ let vehicles = [];
 let target;
 const groundSize = 2000;
 
-const foodCount = 20;
+const foodCount = 50;
 const food = [];
 const poisonCount = 20;
 const poison = [];
@@ -68,24 +68,12 @@ function init() {
   scene.add( grid );
 
   // distribute intial food
-  const foodSize = 10;
   for (var i = 0; i < foodCount; i++) {
-    const x = Math.random() * groundSize - groundSize/2;
-    const z = Math.random() * groundSize - groundSize/2;
-    const foodObj = new THREE.Mesh( new THREE.BoxGeometry( foodSize, foodSize, foodSize ), new THREE.MeshPhongMaterial( { color: 0x00B99A } ));
-    foodObj.position.set(x, foodSize, z);
-    scene.add(foodObj);
-    food.push( foodObj );
+    addNutrient('food');
   }
 
-  const poisonSize = 10;
   for (var i = 0; i < poisonCount; i++) {
-    const x = Math.random() * groundSize - groundSize/2;
-    const z = Math.random() * groundSize - groundSize/2;
-    const poisonObj = new THREE.Mesh( new THREE.BoxGeometry( poisonSize, poisonSize, poisonSize ), new THREE.MeshPhongMaterial( { color: 0xFF6F91 } ));
-    poisonObj.position.set(x, poisonSize, z);
-    scene.add(poisonObj);
-    poison.push( poisonObj );
+    addNutrient('poison');
   }
 
 
@@ -118,6 +106,16 @@ function init() {
 
 }
 
+
+function onWindowResize() {
+
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize( window.innerWidth, window.innerHeight );
+
+}
+
 // Add add mixers and actions based on stored clip, add model to scene
 function createVehicle(model){
 
@@ -144,20 +142,44 @@ function createVehicle(model){
   scene.add( model );
 }
 
+// Add food or poison to the scene
+function addNutrient(type) {
 
-function onWindowResize() {
+  const foodSize = 10;
+  const poisonSize = 10;
 
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-
-  renderer.setSize( window.innerWidth, window.innerHeight );
-
+  const x = Math.random() * groundSize - groundSize/2;
+  const z = Math.random() * groundSize - groundSize/2;
+  if (type === 'food') {
+    const foodObj = new THREE.Mesh(
+      new THREE.BoxGeometry( foodSize, foodSize, foodSize ),
+      new THREE.MeshPhongMaterial( { color: 0x00B99A } )
+    );
+    foodObj.position.set(x, foodSize, z);
+    scene.add(foodObj);
+    food.push( foodObj );
+  }
+  else if (type === 'poison'){
+    const poisonObj = new THREE.Mesh(
+      new THREE.BoxGeometry( poisonSize, poisonSize, poisonSize ),
+      new THREE.MeshPhongMaterial( { color: 0xFF6F91 } )
+    );
+    poisonObj.position.set(x, poisonSize, z);
+    scene.add(poisonObj);
+    poison.push( poisonObj );
+  }
 }
 
 
 function animate() {
 
   requestAnimationFrame( animate );
+
+  // Randomly add new food to scene
+  if (Math.random() < 0.01) {
+    console.log('New food!');
+    addNutrient('food');
+  }
 
   // If vehicles are loaded and food or poison are still available
   if (vehicles.length > 0 && (food.length > 0 || poison.length > 0)) {
@@ -166,15 +188,18 @@ function animate() {
     mixer.update( clock.getDelta() );
 
     // Update vehicles
-    vehicles.map( (vehicle) => {
-      if (!vehicle.dead()) {
-        vehicle.behaviors(food, poison);
-        vehicle.update();
-        vehicle.display();
-      }else{
-        // Stop animation
+    for (var i = vehicles.length-1; i >= 0; i--) {
+      if (!vehicles[i].dead()) {
+        vehicles[i].behaviors(food, poison);
+        vehicles[i].update();
+        vehicles[i].display();
       }
-    });
+      else{
+        // If dead, remove from screen and vehicles array
+        scene.remove(vehicles[i].model);
+        vehicles.slice(i, 1);
+      }
+    }
   }
 
   renderer.render( scene, camera );

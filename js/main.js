@@ -134,10 +134,25 @@ function createVehicle(model){
     }
   });
 
-
   // Create vehicle based on model
   const vehicle = new Vehicle(model, x, z);
   vehicles.push(vehicle);
+
+  // Add spheres indicating food/posion proclivity
+  const foodSphere = new THREE.Mesh(
+    new THREE.SphereGeometry( 10, 5, 5 ),
+    new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna[0], 0) } )
+  );
+  foodSphere.position.set(10, 200, 0);
+  model.add(foodSphere);
+
+  const poisonSphere = new THREE.Mesh(
+    new THREE.SphereGeometry( 10, 5, 5 ),
+    new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna[1], 0, 0) } )
+  );
+  poisonSphere.position.set(-10, 200, 0);
+  model.add(poisonSphere);
+
 
   scene.add( model );
 }

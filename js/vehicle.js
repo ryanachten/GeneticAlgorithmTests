@@ -55,11 +55,13 @@ class Vehicle {
     // Iterate through list and find the closest item
     let record = Infinity;
     let closestIndex = -1;
-    let i;
-    for ( i = 0; i < list.length; i++) {
+    const maxDistance = 1000; //max distance for food/poison line of sight
+    for (let i = 0; i < list.length; i++) {
       const listPos = new THREE.Vector2(list[i].position.x, list[i].position.z);
       const distance = this.position.distanceTo(listPos);
-      if (distance < record) {
+      // if the current item's distance is less than the record
+      // and within the line of sight distance
+      if (distance < record && distance <= maxDistance) {
         record = distance;
         closestIndex = i;
       }
@@ -67,7 +69,8 @@ class Vehicle {
 
     // If the closest item is within a given radius
     // 'eat' amd remove the item
-    if (record < 3) {
+    const eatRadius = 5;
+    if (record < eatRadius) {
       scene.remove(list[closestIndex]);
       list.splice(closestIndex, 1);
 

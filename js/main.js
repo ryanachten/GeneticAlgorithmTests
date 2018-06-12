@@ -4,15 +4,16 @@ var container, stats, controls;
 var camera, scene, renderer, light;
 
 var clock = new THREE.Clock();
+let mixer;
+let clip;
 
-var mixers = [];
-
-let vehicle;
-let object;
+let vehicles = [];
 let target;
 const groundSize = 2000;
 
+const foodCount = 20;
 const food = [];
+const poisonCount = 20;
 const poison = [];
 
 init();
@@ -26,7 +27,8 @@ function init() {
   document.body.appendChild( container );
 
   camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 3000 );
-  camera.position.set( 100, 200, 300 );
+  camera.position.set( 0, 2500, 0 ); //set above the ground
+  camera.rotation.set(-1.5, 0, -1.5); //set lookking down
 
   controls = new THREE.OrbitControls( camera );
   controls.target.set( 0, 100, 0 );
@@ -65,21 +67,9 @@ function init() {
   grid.material.transparent = true;
   scene.add( grid );
 
-  // setup target for GE to find
-  //   target = new THREE.Mesh( new THREE.SphereGeometry( 5, 32, 32 ), new THREE.MeshPhongMaterial( { color: 0x000000 } ));
-  //   target.position.set(-500, 0, 0);
-  //   scene.add(target);
-  //   setInterval(function () {
-  //     target.position.set(
-  //       Math.random() * groundSize - groundSize/2,
-  //       0,
-  //       Math.random() * groundSize - groundSize/2
-  //     );
-  //   }, 5000);
-
   // distribute intial food
   const foodSize = 10;
-  for (var i = 0; i < 10; i++) {
+  for (var i = 0; i < foodCount; i++) {
     const x = Math.random() * groundSize - groundSize/2;
     const z = Math.random() * groundSize - groundSize/2;
     const foodObj = new THREE.Mesh( new THREE.BoxGeometry( foodSize, foodSize, foodSize ), new THREE.MeshPhongMaterial( { color: 0x00B99A } ));
@@ -89,7 +79,7 @@ function init() {
   }
 
   const poisonSize = 10;
-  for (var i = 0; i < 10; i++) {
+  for (var i = 0; i < poisonCount; i++) {
     const x = Math.random() * groundSize - groundSize/2;
     const z = Math.random() * groundSize - groundSize/2;
     const poisonObj = new THREE.Mesh( new THREE.BoxGeometry( poisonSize, poisonSize, poisonSize ), new THREE.MeshPhongMaterial( { color: 0xFF6F91 } ));
@@ -98,30 +88,21 @@ function init() {
     poison.push( poisonObj );
   }
 
-  // load fbx model and store animation
+
+  // Create mixer to run animations
+  mixer = new THREE.AnimationMixer( scene );
+
+  // Load fbx
   var loader = new THREE.FBXLoader();
-  loader.load( 'models/Walking.fbx', function ( model ) {
+  for (var i = 0; i < 5; i++) {
+    loader.load( 'models/Walking.fbx', function ( fbx ) {
+      mixer.clipAction( fbx.animations[ 0 ], fbx )
+          .startAt( - Math.random() )	// random phase (already running)
+          .play();
 
-    object = model;
-
-    object.position.set(0, 0, groundSize*-1); //set near the edge of the ground
-
-    object.mixer = new THREE.AnimationMixer( object );
-    mixers.push( object.mixer );
-
-    var action = object.mixer.clipAction( object.animations[ 0 ] );
-    action.play();
-
-    object.traverse( function ( child ) {
-      if ( child.isMesh ) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
+      createVehicle(fbx);
     });
-
-    vehicle = new Vehicle(object, 0, -800);
-    scene.add( object );
-  });
+  }
 
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setPixelRatio( window.devicePixelRatio );
@@ -137,6 +118,20 @@ function init() {
 
 }
 
+// Add add mixers and actions based on stored clip, add model to scene
+function createVehicle(model){
+
+  const x = Math.random() * groundSize - groundSize/2;
+  const z = Math.random() * groundSize - groundSize/2;
+  model.position.set(x, 0, z);
+
+  const vehicle = new Vehicle(model, x, z);
+  vehicles.push(vehicle);
+
+  scene.add( model );
+}
+
+
 function onWindowResize() {
 
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -151,22 +146,15 @@ function animate() {
 
   requestAnimationFrame( animate );
 
-  // Update animation
-  if ( mixers.length > 0 ) {
-    for ( var i = 0; i < mixers.length; i ++ ) {
-      mixers[ i ].update( clock.getDelta() );
-    }
-  }
-
-  if (object //Make sure object has loaded
-      // Only move if there is food
-      && food.length > 0
-    ) {
+  // Iterate through vehicle collection
+  if (vehicles.length > 0) {
+    mixer.update( clock.getDelta() );
+    vehicles.map( (vehicle) => {
       vehicle.behaviors(food, poison);
       vehicle.update();
       vehicle.display();
+    });
   }
-
 
   renderer.render( scene, camera );
 

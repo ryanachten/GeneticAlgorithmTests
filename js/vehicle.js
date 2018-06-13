@@ -38,6 +38,9 @@ class Vehicle {
     this.acceleration.add(force);
   }
 
+
+
+
   // Applys weighting based on DNA to object steering
   // Good and bad refer to opposing forces (i.e. food and poison)
   behaviors(good, bad){
@@ -55,7 +58,7 @@ class Vehicle {
     // Iterate through list and find the closest item
     let record = Infinity;
     let closestIndex = -1;
-    const maxDistance = 1000; //max distance for food/poison line of sight
+    const maxDistance = 500; //max distance for food/poison line of sight
     for (let i = 0; i < list.length; i++) {
       const listPos = new THREE.Vector2(list[i].position.x, list[i].position.z);
       const distance = this.position.distanceTo(listPos);
@@ -105,6 +108,47 @@ class Vehicle {
     // Return steering force vector
     return steer;
   }
+
+
+  boundaries(){
+
+    const d = 25; //distance from the edge
+    let desired = null;
+    const maxWidth = 1000;
+    const minWidth = -1000;
+    const maxHeight = 1000;
+    const minHeight = -1000;
+
+    if (this.position.x < minWidth-d) {
+      desired = new THREE.Vector2(this.maxSpeed, this.velocity.y);
+      // desired = createVector(this.maxspeed, this.velocity.y);
+    } else if (this.position.x > maxWidth - d) {
+      desired = new THREE.Vector2(-this.maxSpeed, this.velocity.y);
+      // desired = createVector(-this.maxspeed, this.velocity.y);
+    }
+
+    if (this.position.y < minHeight-d) {
+      desired = new THREE.Vector2(this.velocity.x, this.maxSpeed);
+      // desired = createVector(this.velocity.x, this.maxspeed);
+    } else if (this.position.y > maxHeight - d) {
+      desired = new THREE.Vector2(this.velocity.x, -this.maxSpeed);
+      // desired = createVector(this.velocity.x, -this.maxspeed);
+    }
+
+    if (desired !== null) {
+      desired.normalize();
+      // desired.mult(this.maxspeed);
+      desired.multiplyScalar(this.maxSpeed);
+      // let steer = p5.Vector.sub(desired, this.velocity);
+      let steer = new THREE.Vector2();
+      steer.subVectors(desired, this.velocity);
+
+      // steer.limit(this.maxforce);
+      steer.clampLength(0, this.maxForce);
+      this.applyForce(steer);
+    }
+  }
+
 
   // Vehicle 'dies' is health is less than 0
   dead(){

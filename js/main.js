@@ -163,8 +163,9 @@ function addNutrient(type) {
   const foodSize = 10;
   const poisonSize = 10;
 
-  const x = Math.random() * groundSize - groundSize/2;
-  const z = Math.random() * groundSize - groundSize/2;
+  const margin = 100; // Prevent food being to close to edge and causing boundary issues
+  const x = Math.random() * (groundSize - margin) - (groundSize - margin)/2;
+  const z = Math.random() * (groundSize - margin) - (groundSize - margin)/2;
   if (type === 'food') {
     const foodObj = new THREE.Mesh(
       new THREE.BoxGeometry( foodSize, foodSize, foodSize ),
@@ -205,6 +206,7 @@ function animate() {
     // Update vehicles
     for (var i = vehicles.length-1; i >= 0; i--) {
       if (!vehicles[i].dead()) {
+        vehicles[i].boundaries();
         vehicles[i].behaviors(food, poison);
         vehicles[i].update();
         vehicles[i].display();

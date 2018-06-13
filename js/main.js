@@ -146,6 +146,7 @@ function createVehicle(model){
   foodSphere.position.set(10, 200, 0);
   model.add(foodSphere);
 
+
   const poisonSphere = new THREE.Mesh(
     new THREE.SphereGeometry( 10, 5, 5 ),
     new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna[1], 0, 0) } )
@@ -153,6 +154,17 @@ function createVehicle(model){
   poisonSphere.position.set(-10, 200, 0);
   model.add(poisonSphere);
 
+  const foodRadius = new THREE.Mesh(
+    new THREE.CylinderGeometry( vehicle.dna[2], vehicle.dna[2], 10, 10, 1, true),
+    new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna[0], 0), opacity: 0.1, transparent: true} )
+  );
+  model.add(foodRadius);
+
+  const poisonRadius = new THREE.Mesh(
+    new THREE.CylinderGeometry( vehicle.dna[3], vehicle.dna[3], 10, 10, 1, true),
+    new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna[1], 0, 0), opacity: 0.1, transparent: true} )
+  );
+  model.add(poisonRadius);
 
   scene.add( model );
 }
@@ -191,17 +203,21 @@ function animate() {
 
   requestAnimationFrame( animate );
 
-  // Randomly add new food to scene
-  if (Math.random() < 0.01) {
-    console.log('New food!');
-    addNutrient('food');
-  }
-
   // If vehicles are loaded and food or poison are still available
   if (vehicles.length > 0 && (food.length > 0 || poison.length > 0)) {
 
     // Update model animation
     mixer.update( clock.getDelta() );
+
+    // Randomly add new food to scene
+    if (Math.random() < 0.01) {
+      addNutrient('food');
+    }
+
+    // Randomly add new poison to scene
+    if (Math.random() < 0.01) {
+      addNutrient('poison');
+    }
 
     // Update vehicles
     for (var i = vehicles.length-1; i >= 0; i--) {
@@ -214,7 +230,7 @@ function animate() {
       else{
         // If dead, remove from screen and vehicles array
         scene.remove(vehicles[i].model);
-        vehicles.slice(i, 1);
+        vehicles.splice(i, 1);
       }
     }
   }

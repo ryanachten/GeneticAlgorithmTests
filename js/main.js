@@ -1,3 +1,5 @@
+// gtFL creation process: https://www.donmccurdy.com/2017/11/06/creating-animated-gltf-characters-with-mixamo-and-blender/
+
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
 var container, stats, controls;
@@ -116,8 +118,8 @@ function onWindowResize() {
 }
 
 // Creates new model and then controller vehicle
-function instanceVehicle(x, z) {
-  createModel().then( (model) => createVehicle(model, x, z));
+function instanceVehicle(x, z, dna) {
+  createModel().then( (model) => createVehicle(model, x, z, dna));
 }
 
 // Instantiate glTF model for vehicle
@@ -145,9 +147,9 @@ function createModel() {
 }
 
 // Add add mixers and actions based on stored clip, add model to scene
-function createVehicle(model, x, z){
+function createVehicle(model, x, z, dna){
 
-  // Set initial random position for model
+  // Set initial position for model
   model.position.set(x, 0, z);
 
   // Store materials on model to reflect health status
@@ -164,7 +166,7 @@ function createVehicle(model, x, z){
   });
 
   // Create vehicle based on model
-  const vehicle = new Vehicle(model, x, z);
+  const vehicle = new Vehicle(model, x, z, dna);
   vehicles.push(vehicle);
 
   // Visualise vehicle behaviour
@@ -206,14 +208,14 @@ function createHelperGuides(model, vehicle) {
 }
 
 // Add food or poison to the scene
-function addNutrient(type) {
+function addNutrient(type, xPos, zPos) {
 
   const foodSize = 10;
   const poisonSize = 10;
 
   const margin = 100; // Prevent food being to close to edge and causing boundary issues
-  const x = Math.random() * (groundSize - margin) - (groundSize - margin)/2;
-  const z = Math.random() * (groundSize - margin) - (groundSize - margin)/2;
+  const x = xPos ? xPos : Math.random() * (groundSize - margin) - (groundSize - margin)/2;
+  const z = zPos ? zPos : Math.random() * (groundSize - margin) - (groundSize - margin)/2;
   if (type === 'food') {
     const foodObj = new THREE.Mesh(
       new THREE.BoxGeometry( foodSize, foodSize, foodSize ),
@@ -264,12 +266,14 @@ function animate() {
         vehicles[i].display();
 
         if (vehicles[i].clone()) {
-          instanceVehicle(vehicles[i].position.x, vehicles[i].position.y);
+          instanceVehicle(vehicles[i].position.x, vehicles[i].position.y, vehicles[i].dna);
         }
       }
       else{
         // If dead, remove from screen and vehicles array
         scene.remove(vehicles[i].model);
+        // Create new food where the vehicle died
+        addNutrient('food', vehicles[i].position.x, vehicles[i].position.y);
         vehicles.splice(i, 1);
       }
     }

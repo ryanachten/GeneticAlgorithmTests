@@ -1,7 +1,7 @@
 // Based on Shiffman's class: https://github.com/shiffman/The-Nature-of-Code-Examples-p5.js/blob/master/chp06_agents/NOC_6_01_Seek/vehicle.js
 
 class Vehicle {
-  constructor(model, x, y) {
+  constructor(model, x, y, dna) {
 
     this.model = model;
     this.acceleration = new THREE.Vector2( 0, 0 );
@@ -12,13 +12,28 @@ class Vehicle {
 
     this.health = 1;
 
-    //behaviour weightings
-    this.dna = [
-      Math.random(), //food
-      Math.random(), //poison
-      Math.random() * 1000 + 10, //food perception
-      Math.random() * 1000 + 10, //poison perception
-    ];
+    this.mutationRate = 0.1;
+
+    //set inherited behaviour weightings
+    if (dna) {
+      this.dna = dna.filter( (genotype) => {
+        // Randomly apply mutation based on mutation rate
+        if (Math.random() < this.mutationRate) {
+          const mutationSize = Math.random() * genotype - genotype/2;
+          return genotype += mutationSize;
+        }else{
+          return genotype;
+        }
+      });
+    //if first gen, create random behaviour weightings
+    }else{
+      this.dna = [
+        Math.random(), //food
+        Math.random(), //poison
+        Math.random() * 1000 + 10, //food perception
+        Math.random() * 1000 + 10, //poison perception
+      ];
+    }
   }
 
   // Method to update vehicle location

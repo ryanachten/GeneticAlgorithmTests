@@ -144,7 +144,7 @@ class Vehicle {
   }
 
   clone(){
-    if (Math.random() < 0.001) {
+    if (Math.random() < 0.0005) {
       return true;
     }
   }

@@ -27,7 +27,7 @@ function init() {
   container = document.createElement( 'div' );
   document.body.appendChild( container );
 
-  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 3000 );
+  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 5000 );
   camera.position.set( 0, 2500, 0 ); //set above the ground
   camera.rotation.set(-1.5, 0, -1.5); //set lookking down
 
@@ -67,7 +67,7 @@ function init() {
   for (var i = 0; i < foodCount; i++) {
     addNutrient('food');
   }
-
+  // distribute intial poison
   for (var i = 0; i < poisonCount; i++) {
     addNutrient('poison');
   }
@@ -82,8 +82,8 @@ function init() {
 
     gltf = data;
 
+    // Create default vehicles
     for (var i = 0; i < 5; i++) {
-
       instanceVehicle(
         Math.random() * groundSize - groundSize/2,
         Math.random() * groundSize - groundSize/2
@@ -115,27 +115,32 @@ function onWindowResize() {
 
 }
 
+// Creates new model and then controller vehicle
 function instanceVehicle(x, z) {
   createModel().then( (model) => createVehicle(model, x, z));
 }
 
+// Instantiate glTF model for vehicle
 function createModel() {
   return new Promise(function(resolve, reject) {
     const clone = cloneGltf(gltf);
 
+    // Access only the character mesh (ignore glTF cam and lights)
     const model = clone.scene.children[0];
     model.scale.set(1, 1, 1);
+
+    // Rotate default correctly
     model.rotateZ(Math.PI);
 
-    // Create container to get around weird scaling issue
-    const container = new THREE.Object3D();
-    container.add(model);
+    // Create pivot to workaround centred pivot
+    const pivot = new THREE.Object3D();
+    pivot.add(model);
 
     mixer.clipAction( clone.animations[0], model)
-        .startAt( - Math.random() )	// random phase (already running)
+        .startAt( - Math.random() )
         .play();
 
-    resolve(container);
+    resolve(pivot);
   });
 }
 
@@ -161,6 +166,15 @@ function createVehicle(model, x, z){
   // Create vehicle based on model
   const vehicle = new Vehicle(model, x, z);
   vehicles.push(vehicle);
+
+  // Visualise vehicle behaviour
+  createHelperGuides(model, vehicle);
+
+  scene.add( model );
+}
+
+// Visualise vehicle behaviour
+function createHelperGuides(model, vehicle) {
 
   // Add spheres indicating food/posion proclivity
   const foodSphere = new THREE.Mesh(
@@ -189,8 +203,6 @@ function createVehicle(model, x, z){
     new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna[1], 0, 0), opacity: 0.1, transparent: true} )
   );
   model.add(poisonRadius);
-
-  scene.add( model );
 }
 
 // Add food or poison to the scene
@@ -251,9 +263,9 @@ function animate() {
         vehicles[i].update();
         vehicles[i].display();
 
-        // if (vehicles[i].clone()) {
-        //   instanceVehicle(vehicles[i].position.x, vehicles[i].position.z);
-        // }
+        if (vehicles[i].clone()) {
+          instanceVehicle(vehicles[i].position.x, vehicles[i].position.y);
+        }
       }
       else{
         // If dead, remove from screen and vehicles array

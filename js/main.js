@@ -10,6 +10,7 @@ let mixer;
 let clip;
 
 let gltf;
+let textures;
 let vehicles = [];
 let target;
 const groundSize = 2000;
@@ -41,7 +42,7 @@ function init() {
   scene.background = new THREE.Color( 0xa0a0a0 );
   // scene.fog = new THREE.Fog( 0xa0a0a0, 200, 1000 );
 
-  light = new THREE.HemisphereLight( 0xffffff, 0x444444 );
+  light = new THREE.HemisphereLight( 0xffffff, 0xffffff );
   light.position.set( 0, 200, 0 );
   scene.add( light );
 
@@ -65,34 +66,6 @@ function init() {
   grid.material.transparent = true;
   scene.add( grid );
 
-  // distribute intial food
-  for (var i = 0; i < foodCount; i++) {
-    addNutrient('food');
-  }
-  // distribute intial poison
-  for (var i = 0; i < poisonCount; i++) {
-    addNutrient('poison');
-  }
-
-
-  // Create mixer to run animations
-  mixer = new THREE.AnimationMixer( scene );
-
-  // Load fbx
-  var loader = new THREE.GLTFLoader();
-  loader.load( 'models/Walking.gltf', function ( data ) {
-
-    gltf = data;
-
-    // Create default vehicles
-    for (var i = 0; i < 5; i++) {
-      instanceVehicle(
-        Math.random() * groundSize - groundSize/2,
-        Math.random() * groundSize - groundSize/2
-      );
-    }
-  });
-
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight );
@@ -105,7 +78,40 @@ function init() {
   stats = new Stats();
   container.appendChild( stats.dom );
 
+  // Create mixer to run animations
+  mixer = new THREE.AnimationMixer( scene );
+
+  // Load textures
+  loadTextures(['pig.jpg', 'rat.jpg', 'dog.jpg', 'human.jpg', 'donkey.jpg']).then( (imgs) => {
+    textures = imgs;
+
+    // Then load fbx
+    var loader = new THREE.GLTFLoader();
+    loader.load( 'models/Walking.gltf', function ( data ) {
+
+      gltf = data;
+
+      initEvolution();
+    });
+  });
 }
+
+
+function loadTextures(textures) {
+  const loaded = [];
+  return new Promise( (resolve, reject) => {
+    const loader = new THREE.TextureLoader();
+    for (var i = 0; i < textures.length; i++) {
+      const curTexture = textures[i];
+      loader.load( '/img/tex/' + curTexture, (texture) => {
+        loaded.push(texture);
+        if (loaded.length === textures.length) {
+          resolve(loaded);
+        }
+      });
+    }
+  });
+};
 
 
 function onWindowResize() {
@@ -117,9 +123,32 @@ function onWindowResize() {
 
 }
 
+function initEvolution() {
+
+  // distribute intial food
+  for (var i = 0; i < foodCount; i++) {
+    addNutrient('food');
+  }
+  // distribute intial poison
+  for (var i = 0; i < poisonCount; i++) {
+    addNutrient('poison');
+  }
+
+  // Create default vehicles
+  for (var i = 0; i < 5; i++) {
+    instanceVehicle(
+      Math.random() * groundSize - groundSize/2,
+      Math.random() * groundSize - groundSize/2,
+      undefined,
+      textures[i] //texture index
+    );
+  }
+}
+
+
 // Creates new model and then controller vehicle
-function instanceVehicle(x, z, dna) {
-  createModel().then( (model) => createVehicle(model, x, z, dna));
+function instanceVehicle(x, z, dna, texture) {
+  createModel().then( (model) => createVehicle(model, x, z, dna, texture));
 }
 
 // Instantiate glTF model for vehicle
@@ -147,10 +176,19 @@ function createModel() {
 }
 
 // Add add mixers and actions based on stored clip, add model to scene
-function createVehicle(model, x, z, dna){
+function createVehicle(model, x, z, dna, texture){
 
   // Set initial position for model
   model.position.set(x, 0, z);
+
+  // Create vehicle based on model
+  const vehicle = new Vehicle(model, x, z, dna);
+  vehicles.push(vehicle);
+
+  const newTexture = texture.clone(); //clone texture to prevent affecting parent
+  newTexture.image = texture.image;
+  newTexture.needsUpdate = true;
+  model.texture = newTexture; //store a reference to texture to give to children
 
   // Store materials on model to reflect health status
   model.materials = [];
@@ -158,16 +196,16 @@ function createVehicle(model, x, z, dna){
     if (child instanceof THREE.Mesh) {
       const oldMaterial = child.material;
       // Set green to full (i.e. health starts at 100%)
-      const newMaterial = new THREE.MeshPhongMaterial({color: new THREE.Color(0, 1, 1), skinning: true});
+      const newMaterial = new THREE.MeshPhongMaterial({skinning: true, opacity: 1, transparent: true});
       newMaterial.name = oldMaterial.name;
+      newMaterial.map = newTexture;
+      newMaterial.map.wrapS = THREE.MirroredRepeatWrapping;
+      newMaterial.map.wrapT = THREE.MirroredRepeatWrapping;
+      newMaterial.map.repeat.set( vehicle.dna.generation, vehicle.dna.generation );
       child.material = newMaterial;
       model.materials.push(child.material);
     }
   });
-
-  // Create vehicle based on model
-  const vehicle = new Vehicle(model, x, z, dna);
-  vehicles.push(vehicle);
 
   // Visualise vehicle behaviour
   createHelperGuides(model, vehicle);
@@ -266,7 +304,7 @@ function animate() {
         vehicles[i].display();
 
         if (vehicles[i].clone()) {
-          instanceVehicle(vehicles[i].position.x, vehicles[i].position.y, vehicles[i].dna);
+          instanceVehicle(vehicles[i].position.x, vehicles[i].position.y, vehicles[i].dna, vehicles[i].model.texture);
         }
       }
       else{

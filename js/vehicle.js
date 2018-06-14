@@ -16,6 +16,7 @@ class Vehicle {
     //set inherited behaviour weightings
     if (parentDna) {
       this.dna = {
+        generation: parentDna.generation++,
         maxSpeed: this.mutateGene(parentDna.maxSpeed, 1, 1, 8),
         foodAttraction: this.mutateGene(parentDna.foodAttraction, 0.1, 0, 1),
         poisonAttraction: this.mutateGene(parentDna.poisonAttraction, 0.1, 0, 1),
@@ -25,6 +26,7 @@ class Vehicle {
     //if first gen, create random behaviour weightings
     }else{
       this.dna = {
+        generation: 1,
         maxSpeed: Math.random() * 7 +1, //max speed of vehicle
         foodAttraction: Math.random(), //food
         poisonAttraction: Math.random(), //poison
@@ -190,8 +192,7 @@ class Vehicle {
 
     // Update colour of model based on health
     this.model.materials.map( (material) => {
-      material.color.g = this.health;
-      material.color.r = 1-this.health;
+      material.opacity = this.health;
     });
   }
 }

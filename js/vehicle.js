@@ -16,15 +16,12 @@ class Vehicle {
 
     //set inherited behaviour weightings
     if (dna) {
-      this.dna = dna.filter( (genotype) => {
-        // Randomly apply mutation based on mutation rate
-        if (Math.random() < this.mutationRate) {
-          const mutationSize = Math.random() * genotype - genotype/2;
-          return genotype += mutationSize;
-        }else{
-          return genotype;
-        }
-      });
+      this.dna = [
+        this.mutateGene(dna[0], 0.1, 0, 1),
+        this.mutateGene(dna[1], 0.1, 0, 1),
+        this.mutateGene(dna[2], 10, 10, 1000),
+        this.mutateGene(dna[3], 10, 10, 1000)
+      ];
     //if first gen, create random behaviour weightings
     }else{
       this.dna = [
@@ -33,6 +30,19 @@ class Vehicle {
         Math.random() * 1000 + 10, //food perception
         Math.random() * 1000 + 10, //poison perception
       ];
+    }
+  }
+
+  mutateGene(gene, mutationSize, mutationMin, mutationMax){
+    if (Math.random() < this.mutationRate) {
+      const mutation = Math.random() * (mutationSize*2) - mutationSize;
+      console.log('Original', gene);
+      gene += mutationSize; //adjust gene to mutationSize
+      console.log('Mutated', Math.max(mutationMin, Math.min(mutationMax, gene)));
+      return Math.max(mutationMin, Math.min(mutationMax, gene)); //clamp gene
+      return gene;
+    }else{
+      return gene;
     }
   }
 

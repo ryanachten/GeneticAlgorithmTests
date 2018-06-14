@@ -1,7 +1,7 @@
 // Based on Shiffman's class: https://github.com/shiffman/The-Nature-of-Code-Examples-p5.js/blob/master/chp06_agents/NOC_6_01_Seek/vehicle.js
 
 class Vehicle {
-  constructor(model, x, y, dna) {
+  constructor(model, x, y, parentDna) {
 
     this.model = model;
     this.acceleration = new THREE.Vector2( 0, 0 );
@@ -15,21 +15,21 @@ class Vehicle {
     this.mutationRate = 0.1;
 
     //set inherited behaviour weightings
-    if (dna) {
-      this.dna = [
-        this.mutateGene(dna[0], 0.1, 0, 1),
-        this.mutateGene(dna[1], 0.1, 0, 1),
-        this.mutateGene(dna[2], 10, 10, 1000),
-        this.mutateGene(dna[3], 10, 10, 1000)
-      ];
+    if (parentDna) {
+      this.dna = {
+        foodAttraction: this.mutateGene(parentDna.foodAttraction, 0.1, 0, 1),
+        poisonAttraction: this.mutateGene(parentDna.poisonAttraction, 0.1, 0, 1),
+        foodPerception: this.mutateGene(parentDna.foodPerception, 10, 10, 1000),
+        poisonPerception: this.mutateGene(parentDna.poisonPerception, 10, 10, 1000)
+      };
     //if first gen, create random behaviour weightings
     }else{
-      this.dna = [
-        Math.random(), //food
-        Math.random(), //poison
-        Math.random() * 1000 + 10, //food perception
-        Math.random() * 1000 + 10, //poison perception
-      ];
+      this.dna = {
+        foodAttraction: Math.random(), //food
+        poisonAttraction: Math.random(), //poison
+        foodPerception: Math.random() * 1000 + 10, //food perception
+        poisonPerception: Math.random() * 1000 + 10, //poison perception
+      };
     }
   }
 
@@ -41,6 +41,7 @@ class Vehicle {
       console.log('Mutated', Math.max(mutationMin, Math.min(mutationMax, gene)));
       return Math.max(mutationMin, Math.min(mutationMax, gene)); //clamp gene
       return gene;
+    // If not within mutation rate, return copy of parent gene
     }else{
       return gene;
     }
@@ -69,11 +70,11 @@ class Vehicle {
   // Applys weighting based on DNA to object steering
   // Good and bad refer to opposing forces (i.e. food and poison)
   behaviors(good, bad){
-    const steerGood = this.eat(good, 0.1, this.dna[2]);
-    const steerBad = this.eat(bad, -0.1, this.dna[3]);
+    const steerGood = this.eat(good, 0.2, this.dna.foodPerception);
+    const steerBad = this.eat(bad, -0.2, this.dna.poisonPerception);
 
-    steerGood.multiplyScalar(this.dna[0]);
-    steerBad.multiplyScalar(this.dna[1]);
+    steerGood.multiplyScalar(this.dna.foodAttraction);
+    steerBad.multiplyScalar(this.dna.poisonAttraction);
 
     this.applyForce(steerGood);
     this.applyForce(steerBad);

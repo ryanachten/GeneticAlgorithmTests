@@ -181,7 +181,7 @@ function createHelperGuides(model, vehicle) {
   // Add spheres indicating food/posion proclivity
   const foodSphere = new THREE.Mesh(
     new THREE.SphereGeometry( 10, 5, 5 ),
-    new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna[0], 0) } )
+    new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna.foodAttraction, 0) } )
   );
   foodSphere.position.set(10, 200, 0);
   model.add(foodSphere);
@@ -189,20 +189,20 @@ function createHelperGuides(model, vehicle) {
 
   const poisonSphere = new THREE.Mesh(
     new THREE.SphereGeometry( 10, 5, 5 ),
-    new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna[1], 0, 0) } )
+    new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna.poisonAttraction, 0, 0) } )
   );
   poisonSphere.position.set(-10, 200, 0);
   model.add(poisonSphere);
 
   const foodRadius = new THREE.Mesh(
-    new THREE.CylinderGeometry( vehicle.dna[2], vehicle.dna[2], 10, 10, 1, true),
-    new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna[0], 0), opacity: 0.1, transparent: true} )
+    new THREE.CylinderGeometry( vehicle.dna.foodPerception, vehicle.dna.foodPerception, 10, 10, 1, true),
+    new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna.foodAttraction, 0), opacity: 0.1, transparent: true} )
   );
   model.add(foodRadius);
 
   const poisonRadius = new THREE.Mesh(
-    new THREE.CylinderGeometry( vehicle.dna[3], vehicle.dna[3], 10, 10, 1, true),
-    new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna[1], 0, 0), opacity: 0.1, transparent: true} )
+    new THREE.CylinderGeometry( vehicle.dna.poisonPerception, vehicle.dna.poisonPerception, 10, 10, 1, true),
+    new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna.poisonAttraction, 0, 0), opacity: 0.1, transparent: true} )
   );
   model.add(poisonRadius);
 }

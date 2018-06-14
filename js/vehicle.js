@@ -143,6 +143,12 @@ class Vehicle {
     }
   }
 
+  clone(){
+    if (Math.random() < 0.001) {
+      return true;
+    }
+  }
+
 
   // Vehicle 'dies' is health is less than 0
   dead(){
@@ -152,7 +158,7 @@ class Vehicle {
   // Determine how vehicle model should be displayed
   display(){
     // Rotate model to face direction
-    this.model.lookAt(this.position.x, 0 , this.position.y);
+    this.model.lookAt(this.position.x, 0, this.position.y);
 
     // Position model based on vehicle position
     this.model.position.set(this.position.x, 0, this.position.y);

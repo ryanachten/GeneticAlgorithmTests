@@ -7,6 +7,7 @@ var clock = new THREE.Clock();
 let mixer;
 let clip;
 
+let gltf;
 let vehicles = [];
 let target;
 const groundSize = 2000;
@@ -44,11 +45,6 @@ function init() {
 
   light = new THREE.DirectionalLight( 0xffffff );
   light.position.set( 0, 200, 100 );
-  light.castShadow = true;
-  light.shadow.camera.top = 180;
-  light.shadow.camera.bottom = -100;
-  light.shadow.camera.left = -120;
-  light.shadow.camera.right = 120;
   scene.add( light );
 
   // scene.add( new THREE.CameraHelper( light.shadow.camera ) );
@@ -81,16 +77,19 @@ function init() {
   mixer = new THREE.AnimationMixer( scene );
 
   // Load fbx
-  var loader = new THREE.FBXLoader();
-  for (var i = 0; i < 5; i++) {
-    loader.load( 'models/Walking.fbx', function ( fbx ) {
-      mixer.clipAction( fbx.animations[ 0 ], fbx )
-          .startAt( - Math.random() )	// random phase (already running)
-          .play();
+  var loader = new THREE.GLTFLoader();
+  loader.load( 'models/Walking.gltf', function ( data ) {
 
-      createVehicle(fbx);
-    });
-  }
+    gltf = data;
+
+    for (var i = 0; i < 5; i++) {
+
+      instanceVehicle(
+        Math.random() * groundSize - groundSize/2,
+        Math.random() * groundSize - groundSize/2
+      );
+    }
+  });
 
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setPixelRatio( window.devicePixelRatio );
@@ -116,20 +115,45 @@ function onWindowResize() {
 
 }
 
+function instanceVehicle(x, z) {
+  createModel().then( (model) => createVehicle(model, x, z));
+}
+
+function createModel() {
+  return new Promise(function(resolve, reject) {
+    const clone = cloneGltf(gltf);
+
+    const model = clone.scene.children[0];
+    model.scale.set(1, 1, 1);
+    model.rotateZ(Math.PI);
+
+    // Create container to get around weird scaling issue
+    const container = new THREE.Object3D();
+    container.add(model);
+
+    mixer.clipAction( clone.animations[0], model)
+        .startAt( - Math.random() )	// random phase (already running)
+        .play();
+
+    resolve(container);
+  });
+}
+
 // Add add mixers and actions based on stored clip, add model to scene
-function createVehicle(model){
+function createVehicle(model, x, z){
 
   // Set initial random position for model
-  const x = Math.random() * groundSize - groundSize/2;
-  const z = Math.random() * groundSize - groundSize/2;
   model.position.set(x, 0, z);
 
   // Store materials on model to reflect health status
   model.materials = [];
-  model.traverse( (child) => {
+  model.children[0].traverse( (child) => {
     if (child instanceof THREE.Mesh) {
+      const oldMaterial = child.material;
       // Set green to full (i.e. health starts at 100%)
-      child.material.color = new THREE.Color(0, 1, 1);
+      const newMaterial = new THREE.MeshPhongMaterial({color: new THREE.Color(0, 1, 1), skinning: true});
+      newMaterial.name = oldMaterial.name;
+      child.material = newMaterial;
       model.materials.push(child.material);
     }
   });
@@ -226,6 +250,10 @@ function animate() {
         vehicles[i].behaviors(food, poison);
         vehicles[i].update();
         vehicles[i].display();
+
+        // if (vehicles[i].clone()) {
+        //   instanceVehicle(vehicles[i].position.x, vehicles[i].position.z);
+        // }
       }
       else{
         // If dead, remove from screen and vehicles array

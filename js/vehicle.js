@@ -7,7 +7,6 @@ class Vehicle {
     this.acceleration = new THREE.Vector2( 0, 0 );
     this.velocity = new THREE.Vector2( 0, 1 );
     this.position = new THREE.Vector2( x, y );
-    this.maxSpeed = 3;
     this.maxForce = 0.8;
 
     this.health = 1;
@@ -17,6 +16,7 @@ class Vehicle {
     //set inherited behaviour weightings
     if (parentDna) {
       this.dna = {
+        maxSpeed: this.mutateGene(parentDna.maxSpeed, 1, 1, 8),
         foodAttraction: this.mutateGene(parentDna.foodAttraction, 0.1, 0, 1),
         poisonAttraction: this.mutateGene(parentDna.poisonAttraction, 0.1, 0, 1),
         foodPerception: this.mutateGene(parentDna.foodPerception, 10, 10, 1000),
@@ -25,6 +25,7 @@ class Vehicle {
     //if first gen, create random behaviour weightings
     }else{
       this.dna = {
+        maxSpeed: Math.random() * 7 +1, //max speed of vehicle
         foodAttraction: Math.random(), //food
         poisonAttraction: Math.random(), //poison
         foodPerception: Math.random() * 1000 + 10, //food perception
@@ -36,9 +37,7 @@ class Vehicle {
   mutateGene(gene, mutationSize, mutationMin, mutationMax){
     if (Math.random() < this.mutationRate) {
       const mutation = Math.random() * (mutationSize*2) - mutationSize;
-      console.log('Original', gene);
       gene += mutationSize; //adjust gene to mutationSize
-      console.log('Mutated', Math.max(mutationMin, Math.min(mutationMax, gene)));
       return Math.max(mutationMin, Math.min(mutationMax, gene)); //clamp gene
       return gene;
     // If not within mutation rate, return copy of parent gene
@@ -54,7 +53,7 @@ class Vehicle {
     // update velocity
     this.velocity.add(this.acceleration);
     // limit speed
-    this.velocity.clampLength(0, this.maxSpeed); //instead of p5's .limit()?
+    this.velocity.clampLength(0, this.dna.maxSpeed); //instead of p5's .limit()?
     // update position
     this.position.add(this.velocity);
     // reset acceleration to 0 ea. cycle
@@ -125,7 +124,7 @@ class Vehicle {
     // scale to maximum speed - *p5* desired.setMag(this.maxspeed);
       // .setMag() - Set the magnitude of this vector to the value
     desired.normalize();
-    desired.setLength(this.maxSpeed);
+    desired.setLength(this.dna.maxSpeed);
     // steering = desired minus velocity
     const steer = desired.sub(this.velocity);
     steer.clampLength(0, this.maxForce);
@@ -144,22 +143,22 @@ class Vehicle {
     const minHeight = -1000;
 
     if (this.position.x < minWidth - d) {
-      desired = new THREE.Vector2(this.maxSpeed, this.velocity.y);
+      desired = new THREE.Vector2(this.dna.maxSpeed, this.velocity.y);
     }
     else if (this.position.x > maxWidth - d) {
-      desired = new THREE.Vector2(-this.maxSpeed, this.velocity.y);
+      desired = new THREE.Vector2(-this.dna.maxSpeed, this.velocity.y);
     }
 
     if (this.position.y < minHeight - d) {
-      desired = new THREE.Vector2(this.velocity.x, this.maxSpeed);
+      desired = new THREE.Vector2(this.velocity.x, this.dna.maxSpeed);
     }
     else if (this.position.y > maxHeight - d) {
-      desired = new THREE.Vector2(this.velocity.x, -this.maxSpeed);
+      desired = new THREE.Vector2(this.velocity.x, -this.dna.maxSpeed);
     }
 
     if (desired !== null) {
       desired.normalize();
-      desired.multiplyScalar(this.maxSpeed);
+      desired.multiplyScalar(this.dna.maxSpeed);
 
       let steer = new THREE.Vector2();
       steer.subVectors(desired, this.velocity);

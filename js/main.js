@@ -167,7 +167,7 @@ function createModel() {
     const pivot = new THREE.Object3D();
     pivot.add(model);
 
-    mixer.clipAction( clone.animations[0], model)
+    pivot.action = mixer.clipAction( clone.animations[0], model)
         .startAt( - Math.random() )
         .play();
 
@@ -312,7 +312,10 @@ function animate() {
         scene.remove(vehicles[i].model);
         // Create new food where the vehicle died
         addNutrient('food', vehicles[i].position.x, vehicles[i].position.y);
+        // Remove animation action from mixer
+        mixer.uncacheAction(vehicles[i].model.action.getClip(), vehicles[i].model.children[0]);
         vehicles.splice(i, 1);
+
       }
     }
   }

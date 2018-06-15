@@ -185,7 +185,13 @@ function createVehicle(model, x, z, dna, texture){
   const vehicle = new Vehicle(model, x, z, dna);
   vehicles.push(vehicle);
 
-  const newTexture = texture.clone(); //clone texture to prevent affecting parent
+  // Set model scale relative to speed
+  // i.e slower == bigger
+  const scale = 2 * (1- vehicle.dna.maxSpeed/8) + 1;
+  model.children[0].scale.set(scale, scale, scale);
+
+  // Clone texture to prevent affecting parent
+  const newTexture = texture.clone();
   newTexture.image = texture.image;
   newTexture.needsUpdate = true;
   model.texture = newTexture; //store a reference to texture to give to children
@@ -208,20 +214,20 @@ function createVehicle(model, x, z, dna, texture){
   });
 
   // Visualise vehicle behaviour
-  createHelperGuides(model, vehicle);
+  createHelperGuides(model, scale, vehicle, );
 
   scene.add( model );
 }
 
 // Visualise vehicle behaviour
-function createHelperGuides(model, vehicle) {
+function createHelperGuides(model, scale, vehicle) {
 
   // Add spheres indicating food/posion proclivity
   const foodSphere = new THREE.Mesh(
     new THREE.SphereGeometry( 10, 5, 5 ),
     new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna.foodAttraction, 0) } )
   );
-  foodSphere.position.set(10, 200, 0);
+  foodSphere.position.set(10, 200*scale, 0);
   model.add(foodSphere);
 
 
@@ -229,7 +235,7 @@ function createHelperGuides(model, vehicle) {
     new THREE.SphereGeometry( 10, 5, 5 ),
     new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna.poisonAttraction, 0, 0) } )
   );
-  poisonSphere.position.set(-10, 200, 0);
+  poisonSphere.position.set(-10, 200*scale, 0);
   model.add(poisonSphere);
 
   const foodRadius = new THREE.Mesh(

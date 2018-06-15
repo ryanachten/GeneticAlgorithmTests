@@ -11,7 +11,7 @@ class Vehicle {
 
     this.health = 1;
 
-    this.mutationRate = 0.1;
+    this.mutationRate = 0.3;
 
     //set inherited behaviour weightings
     if (parentDna) {

@@ -22,7 +22,7 @@ class Vehicle {
     if (parentDna) {
       this.dna = {
         generation: parentDna.generation++,
-        maxSpeed: this.mutateGene(parentDna.maxSpeed, 1, 1, 8),
+        maxSpeed: this.mutateGene(parentDna.maxSpeed, 1, 2, 8),
         foodAttraction: this.mutateGene(parentDna.foodAttraction, 0.1, 0, 1),
         poisonAttraction: this.mutateGene(parentDna.poisonAttraction, 0.1, 0, 1),
         foodPerception: this.mutateGene(parentDna.foodPerception, 10, 10, 1000),
@@ -32,7 +32,7 @@ class Vehicle {
     }else{
       this.dna = {
         generation: 1,
-        maxSpeed: Math.random() * 7 +1, //max speed of vehicle
+        maxSpeed: Math.random() * 7 +2, //max speed of vehicle
         foodAttraction: Math.random(), //food
         poisonAttraction: Math.random(), //poison
         foodPerception: Math.random() * 1000 + 10, //food perception
@@ -103,7 +103,7 @@ class Vehicle {
 
     // If the closest item is within a given radius
     // 'eat' amd remove the item
-    const eatRadius = 5;
+    const eatRadius = 10;
     if (record < eatRadius) {
       this.scene.remove(list[closestIndex]);
       list.splice(closestIndex, 1);
@@ -144,10 +144,10 @@ class Vehicle {
   boundaries(){
     const d = 25; //margin from the edge
     let desired = null;
-    const maxWidth = 1000;
-    const minWidth = -1000;
-    const maxHeight = 1000;
-    const minHeight = -1000;
+    const maxWidth = 2000;
+    const minWidth = -2000;
+    const maxHeight = 2000;
+    const minHeight = -2000;
 
     if (this.position.x < minWidth - d) {
       desired = new THREE.Vector2(this.dna.maxSpeed, this.velocity.y);

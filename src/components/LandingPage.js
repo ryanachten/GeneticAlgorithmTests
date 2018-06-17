@@ -6,6 +6,7 @@ import GLTFLoader from '../vendor/GLTFLoader';
 import {createScene, loadTextures} from '../three/initThree';
 import {addFood, addPoison} from  '../three/evolution';
 import {Vehicle, instanceVehicle} from '../three/vehicle';
+import Tree from '../three/tree';
 
 
 class LandingPage extends React.Component {
@@ -18,8 +19,7 @@ class LandingPage extends React.Component {
     this.state = {
       canvasWidth: undefined,
       canvasHeight: undefined,
-      groundSize: 2000,
-
+      groundSize: 4000,
     }
   }
 
@@ -92,6 +92,13 @@ class LandingPage extends React.Component {
 
   initEvolution() {
 
+    this.tree = new Tree(500, 1000);
+    this.scene.add(this.tree.create());
+    const fruits = this.tree.createFruit();
+    fruits.map( (fruit) => {
+      this.scene.add(fruit);
+    });
+
     const foodCount = 20;
     const poisonCount = 20;
 
@@ -142,6 +149,21 @@ class LandingPage extends React.Component {
 
   renderScene() {
 
+    if (Math.random() < 0.01 && this.tree.fallingFruit.length === 0) {
+      const fruits = this.tree.createFruit();
+      fruits.map( (fruit) => {
+        this.scene.add(fruit);
+      });
+    }
+    if (this.tree.fallenFruit.length > 0) {
+      for (var i = 0; i < this.tree.fallenFruit.length; i++) {
+        this.food.push(this.tree.fallenFruit[i]);
+        this.tree.fallenFruit.splice(i, 1);
+      }
+    }
+    this.tree.update();
+
+
     // If vehicles are loaded and food or poison are still available
     if (this.vehicles.length > 0 && (this.food.length > 0 || this.poison.length > 0)) {
 
@@ -171,7 +193,6 @@ class LandingPage extends React.Component {
           this.vehicles[i].display();
 
           if (this.vehicles[i].clone()) {
-            console.log('clone fucker');
             instanceVehicle(
               this.gltf,
               this.scene,

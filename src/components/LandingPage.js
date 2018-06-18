@@ -100,18 +100,17 @@ class LandingPage extends React.Component {
 
   initEvolution() {
 
-    const wolf =  new Wolf(
-      this.gltf,
-      this.scene,
-      this.mixer,
-      Math.random() * this.state.groundSize - this.state.groundSize/2,
-      Math.random() * this.state.groundSize - this.state.groundSize/2,
-      undefined,
-      this.textures.wolf
-    )
-    wolf.dna.maxSpeed = 20;
-    this.wolf = wolf;
-    console.log(this.wolf);
+    this.wolves = [
+      new Wolf(
+        this.gltf,
+        this.scene,
+        this.mixer,
+        Math.random() * this.state.groundSize - this.state.groundSize/2,
+        Math.random() * this.state.groundSize - this.state.groundSize/2,
+        undefined,
+        this.textures.wolf
+      )
+    ];
 
     // Create forrest
     this.trees = [];
@@ -172,13 +171,22 @@ class LandingPage extends React.Component {
 
   renderScene() {
 
-    this.wolf.boundaries();
-    this.wolf.behaviors(this.food, this.poison);
-    this.wolf.update();
-    this.wolf.display();
-
     // If vehicles are loaded and food or poison are still available
     if (this.vehicles.length > 0 && (this.food.length > 0 || this.poison.length > 0)) {
+
+      for (var i = 0; i < this.wolves.length; i++) {
+        this.wolves[i].boundaries();
+        this.wolves[i].behaviors(this.vehicles, this.poison);
+        this.wolves[i].update();
+        this.wolves[i].display();
+        const clone = this.wolves[i].clone();
+        if (clone) {
+          this.wolves.push(clone);
+        }
+        if (this.wolves[i].dead()) {
+          this.wolves.splice(i, 1);
+        }
+      }
 
       // Update forrest
       this.trees.map( (tree) => {
@@ -222,29 +230,17 @@ class LandingPage extends React.Component {
           this.vehicles[i].update();
           this.vehicles[i].display();
 
-          if (this.vehicles[i].clone()) {
-            this.vehicles.push( new Vehicle(
-              this.gltf,
-              this.scene,
-              this.mixer,
-              this.vehicles[i].position.x,
-              this.vehicles[i].position.y,
-              this.vehicles[i].dna,
-              this.vehicles[i].model.texture
-            ));
+          const clone = this.vehicles[i].clone();
+          if (clone) {
+            this.vehicles.push(clone);
           }
         }
         else{
-          // If dead, remove from screen and vehicles array
-          this.scene.remove(this.vehicles[i].model);
           // Create new food where the vehicle died
           const foodObj = addFood(this.state.groundSize, this.vehicles[i].position.x, this.vehicles[i].position.y);
           this.scene.add( foodObj);
           this.food.push( foodObj );
-          // Remove animation action from mixer
-          this.mixer.uncacheAction(this.vehicles[i].model.action.getClip(), this.vehicles[i].model.children[0]);
           this.vehicles.splice(i, 1);
-
         }
       }
     }

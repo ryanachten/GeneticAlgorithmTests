@@ -4,13 +4,13 @@ import cloneGltf from '../vendor/cloneGltf';
 // Based on Shiffman's class: https://github.com/shiffman/The-Nature-of-Code-Examples-p5.js/blob/master/chp06_agents/NOC_6_01_Seek/vehicle.js
 
 
-// gltf, scene, mixer, x, z, dna, texture
 class Vehicle {
-  // constructor(model, scene, x, y, parentDna) {
   constructor(gltf, scene, mixer, x, z, parentDna, texture) {
 
+    this.gltf = gltf;
     this.scene = scene;
-
+    this.mixer = mixer;
+    this.texture = texture;
     this.acceleration = new THREE.Vector2( 0, 0 );
     this.velocity = new THREE.Vector2( 0, 1 );
     this.position = new THREE.Vector2( x, z );
@@ -42,7 +42,7 @@ class Vehicle {
       };
     }
 
-    this.model = this.createModel(gltf, mixer, scene, x, z, this.dna, texture);
+    this.model = this.createModel(this.gltf, this.mixer, this.scene, x, z, this.dna, this.texture);
     scene.add(this.model);
     return this;
   }
@@ -119,6 +119,7 @@ class Vehicle {
     }
     // Otherwise return closest item vector
     else if(closestIndex > -1) {
+      // console.log(list[closestIndex].position);
       return this.seek(new THREE.Vector2(
         list[closestIndex].position.x,
         list[closestIndex].position.z)
@@ -183,14 +184,23 @@ class Vehicle {
 
   clone(){
     if (Math.random() < 0.0005) {
-      return true;
+      return new Vehicle(this.gltf, this.scene, this.mixer, this.position.x, this.position.y, this.dna, this.texture);
     }
   }
 
 
   // Vehicle 'dies' is health is less than 0
   dead(){
-    return (this.health < 0)
+    if (this.health < 0) {
+      // If dead, remove from screen and vehicles array
+      this.scene.remove(this.model);
+      // Remove animation action from mixer
+      this.mixer.uncacheAction(this.model.action.getClip(), this.model.children[0]);
+      return true;
+    }
+    else{
+      return false;
+    }
   }
 
   // Determine how vehicle model should be displayed
@@ -209,54 +219,53 @@ class Vehicle {
 
   // Instantiate glTF model for vehicle
   createModel(gltf, mixer, scene, x, z, dna, texture) {
-    // return new Promise(function(resolve, reject) {
-      const clone = cloneGltf(gltf);
+    const clone = cloneGltf(gltf);
 
-      // Access only the character mesh (ignore glTF cam and lights)
-      const character = clone.scene.children[0];
-      character.scale.set(1, 1, 1);
+    // Access only the character mesh (ignore glTF cam and lights)
+    const character = clone.scene.children[0];
+    character.scale.set(1, 1, 1);
 
-      // Rotate default correctly
-      character.rotateZ(Math.PI);
+    // Rotate default correctly
+    character.rotateZ(Math.PI);
 
-      // Create pivot to workaround centred pivot
-      const model = new THREE.Object3D();
-      model.add(character);
+    // Create pivot to workaround centred pivot
+    const model = new THREE.Object3D();
+    model.add(character);
 
-      model.action = mixer.clipAction( clone.animations[0], character)
-      .startAt( - Math.random() )
-      .play();
+    model.action = mixer.clipAction( clone.animations[0], character)
+    .startAt( - Math.random() )
+    .play();
 
-      // Set initial position for model
-      model.position.set(x, 0, z);
+    // Set initial position for model
+    model.position.set(x, 0, z);
 
-      // Set model scale relative to speed
-      // i.e slower == bigger
-      const scale = 2 * (1- dna.maxSpeed/8) + 1;
-      model.children[0].scale.set(scale, scale, scale);
+    // Set model scale relative to speed
+    // i.e slower == bigger
+    const scale = 2 * (1- dna.maxSpeed/8) + 1;
+    model.children[0].scale.set(scale, scale, scale);
 
-      // Clone texture to prevent affecting parent
-      const newTexture = texture.clone();
-      newTexture.image = texture.image;
-      newTexture.needsUpdate = true;
-      model.texture = newTexture; //store a reference to texture to give to children
+    // Clone texture to prevent affecting parent
+    const newTexture = texture.clone();
+    newTexture.image = texture.image;
+    newTexture.needsUpdate = true;
+    model.texture = newTexture; //store a reference to texture to give to children
 
-      // Store materials on model to reflect health status
-      model.materials = [];
-      model.children[0].traverse( (child) => {
-        if (child instanceof THREE.Mesh) {
-          const oldMaterial = child.material;
-          // Set green to full (i.e. health starts at 100%)
-          const newMaterial = new THREE.MeshPhongMaterial({skinning: true, opacity: 1, transparent: true});
-          newMaterial.name = oldMaterial.name;
-          newMaterial.map = newTexture;
-          newMaterial.map.wrapS = THREE.MirroredRepeatWrapping;
-          newMaterial.map.wrapT = THREE.MirroredRepeatWrapping;
-          newMaterial.map.repeat.set( dna.generation, dna.generation );
-          child.material = newMaterial;
-          model.materials.push(child.material);
-        }
-      });
+    // Store materials on model to reflect health status
+    model.materials = [];
+    model.children[0].traverse( (child) => {
+      if (child instanceof THREE.Mesh) {
+        const oldMaterial = child.material;
+        // Set green to full (i.e. health starts at 100%)
+        const newMaterial = new THREE.MeshPhongMaterial({skinning: true, opacity: 1, transparent: true});
+        newMaterial.name = oldMaterial.name;
+        newMaterial.map = newTexture;
+        newMaterial.map.wrapS = THREE.MirroredRepeatWrapping;
+        newMaterial.map.wrapT = THREE.MirroredRepeatWrapping;
+        newMaterial.map.repeat.set( dna.generation, dna.generation );
+        child.material = newMaterial;
+        model.materials.push(child.material);
+      }
+    });
 
     // this.createHelperGuides(model, scale, dna);
 

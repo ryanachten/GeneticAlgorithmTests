@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 
 class Tree {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
+  constructor(groundSize) {
+    this.width = Math.random() * 1000 + 200;
+    this.height = Math.random() * 1000 + 500;
+    this.x = Math.random() * (groundSize - (this.width*2 +100)) - (groundSize - (this.width*2 +100))/2;
+    this.z = Math.random() * (groundSize - (this.width*2 +100)) - (groundSize - (this.width*2 +100))/2;
     this.fallingFruit = [];
     this.fallenFruit = [];
     this.model = undefined;
@@ -15,7 +17,7 @@ class Tree {
       new THREE.MeshPhongMaterial({ color: 0x00B99A, transparent: true, opacity: 0.5  })
     );
     trunk.name = 'trunk';
-    this.trunk = trunk;
+
 
     const treeTop = new THREE.Mesh(
       new THREE.ConeGeometry(this.width, this.height/4, 10),
@@ -23,34 +25,42 @@ class Tree {
     );
     treeTop.position.y += this.height/2;
     treeTop.name = 'treeTop';
-    this.treeTop = treeTop;
-
 
     const treeObj = new THREE.Object3D();
     treeObj.add(trunk, treeTop);
 
-    treeObj.position.y += this.height/2;
+    treeObj.position.set(this.x, 0, this.z);
+    treeObj.position.y += this.height/2; //align with ground level
+    treeObj.updateMatrixWorld(); //update child matricies
 
+    this.trunk = trunk;
+    this.treeTop = treeTop;
     this.model = treeObj;
     return treeObj;
   }
 
   createFruit(){
-    // this.treeTop.geometry.verticesNeedUpdate = true;
-    // this.treeTop.updateMatrix();
+    this.treeTop.updateMatrix();
     const vertices = this.treeTop.geometry.vertices;
     const fruits = [];
     const fruitSize = 10;
 
     for (var i = 1; i < vertices.length-1; i++) {
-      const fruit = new THREE.Mesh(
-        new THREE.BoxGeometry(fruitSize, fruitSize, fruitSize),
-        new THREE.MeshPhongMaterial({ color: 'red' })
-      );
-      vertices[i].applyMatrix4(this.treeTop.matrix);
-      fruit.position.copy(vertices[i]);
-      fruit.position.y = (this.height - fruitSize);
-      fruits.push(fruit);
+      if (Math.random() < 0.3) {
+        const fruit = new THREE.Mesh(
+          new THREE.BoxGeometry(fruitSize, fruitSize, fruitSize),
+          new THREE.MeshPhongMaterial({ color: 'blue' })
+        );
+
+        // Create vertice copy to apply matrix transforms to align fruit w/ real world vertice position w/o affecting mesh structure
+        const vertPos = new THREE.Vector3(vertices[i].x, vertices[i].y, vertices[i].z);
+        vertPos.applyMatrix4(this.treeTop.matrix);
+        vertPos.applyMatrix4(this.model.matrix);
+
+        fruit.position.copy(vertPos);
+        fruit.position.y = (this.height - fruitSize);
+        fruits.push(fruit);
+      }
     }
 
     this.fallingFruit = this.fallingFruit.concat(fruits);

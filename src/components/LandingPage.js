@@ -92,12 +92,17 @@ class LandingPage extends React.Component {
 
   initEvolution() {
 
-    this.tree = new Tree(500, 1000);
-    this.scene.add(this.tree.create());
-    const fruits = this.tree.createFruit();
-    fruits.map( (fruit) => {
-      this.scene.add(fruit);
-    });
+    // Create forrest
+    this.trees = [];
+    for (var i = 0; i < 5; i++) {
+      const tree = new Tree(this.state.groundSize);
+      this.scene.add(tree.create());
+      const fruits = tree.createFruit();
+      fruits.map( (fruit) => {
+        this.scene.add(fruit);
+      });
+      this.trees.push(tree);
+    }
 
     const foodCount = 20;
     const poisonCount = 20;
@@ -149,23 +154,25 @@ class LandingPage extends React.Component {
 
   renderScene() {
 
-    if (Math.random() < 0.01 && this.tree.fallingFruit.length === 0) {
-      const fruits = this.tree.createFruit();
-      fruits.map( (fruit) => {
-        this.scene.add(fruit);
-      });
-    }
-    if (this.tree.fallenFruit.length > 0) {
-      for (var i = 0; i < this.tree.fallenFruit.length; i++) {
-        this.food.push(this.tree.fallenFruit[i]);
-        this.tree.fallenFruit.splice(i, 1);
-      }
-    }
-    this.tree.update();
-
-
     // If vehicles are loaded and food or poison are still available
     if (this.vehicles.length > 0 && (this.food.length > 0 || this.poison.length > 0)) {
+
+      // Update forrest
+      this.trees.map( (tree) => {
+        if (Math.random() < 0.001 && tree.fallingFruit.length === 0) {
+          const fruits = tree.createFruit();
+          fruits.map( (fruit) => {
+            this.scene.add(fruit);
+          });
+        }
+        if (tree.fallenFruit.length > 0) {
+          for (var i = 0; i < tree.fallenFruit.length; i++) {
+            this.food.push(tree.fallenFruit[i]);
+            tree.fallenFruit.splice(i, 1);
+          }
+        }
+        tree.update();
+      });
 
       // Update model animation
       this.mixer.update( this.clock.getDelta() );

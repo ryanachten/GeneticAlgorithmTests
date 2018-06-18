@@ -8,8 +8,6 @@ class Wolf extends Vehicle{
 
     super(gltf, scene, mixer, x, z, parentDna, texture);
 
-    this.health = 2;
-
     if (parentDna) {
       this.dna = {
         generation: parentDna.generation++,
@@ -63,8 +61,10 @@ class Wolf extends Vehicle{
     // 'eat' amd remove the item
     const eatRadius = 30;
     if (record < eatRadius) {
-      this.scene.remove(list[closestIndex].model);
-      list.splice(closestIndex, 1);
+
+      // Reduce victim vehicle's health to 0
+      // allow vehicle.dead() to handle unmounting vehicle
+      list[closestIndex].health = 0;
 
       // health of vehicle goes up/down based on what they 'ate'
       this.health += nutrition;

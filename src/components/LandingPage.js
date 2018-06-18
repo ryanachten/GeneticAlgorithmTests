@@ -100,18 +100,6 @@ class LandingPage extends React.Component {
 
   initEvolution() {
 
-    this.wolves = [
-      new Wolf(
-        this.gltf,
-        this.scene,
-        this.mixer,
-        Math.random() * this.state.groundSize - this.state.groundSize/2,
-        Math.random() * this.state.groundSize - this.state.groundSize/2,
-        undefined,
-        this.textures.wolf
-      )
-    ];
-
     // Create forrest
     this.trees = [];
     for (var i = 0; i < 5; i++) {
@@ -174,17 +162,24 @@ class LandingPage extends React.Component {
     // If vehicles are loaded and food or poison are still available
     if (this.vehicles.length > 0 && (this.food.length > 0 || this.poison.length > 0)) {
 
-      for (var i = 0; i < this.wolves.length; i++) {
-        this.wolves[i].boundaries();
-        this.wolves[i].behaviors(this.vehicles, this.poison);
-        this.wolves[i].update();
-        this.wolves[i].display();
-        const clone = this.wolves[i].clone();
-        if (clone) {
-          this.wolves.push(clone);
-        }
-        if (this.wolves[i].dead()) {
-          this.wolves.splice(i, 1);
+      // Create wolf at random intervals
+      if (Math.random() < 0.001 && !this.wolf) {
+        this.wolf = new Wolf(
+          this.gltf,
+          this.scene,
+          this.mixer,
+          Math.random() * this.state.groundSize - this.state.groundSize/2,
+          Math.random() * this.state.groundSize - this.state.groundSize/2,
+          undefined,
+          this.textures.wolf
+        );
+      }else if (this.wolf) {
+        this.wolf.boundaries();
+        this.wolf.behaviors(this.vehicles, this.poison);
+        this.wolf.update();
+        this.wolf.display();
+        if (this.wolf.dead()) {
+          this.wolf = undefined
         }
       }
 

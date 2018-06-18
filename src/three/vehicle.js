@@ -191,7 +191,7 @@ class Vehicle {
 
   // Vehicle 'dies' is health is less than 0
   dead(){
-    if (this.health < 0) {
+    if (this.health <= 0) {
       // If dead, remove from screen and vehicles array
       this.scene.remove(this.model);
       // Remove animation action from mixer

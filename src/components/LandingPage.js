@@ -159,8 +159,8 @@ class LandingPage extends React.Component {
 
   renderScene() {
 
-    // If vehicles are loaded and food or poison are still available
-    if (this.vehicles.length > 0 && (this.food.length > 0 || this.poison.length > 0)) {
+    // If there are vehicles still present in the scene, keep running
+    if (this.vehicles.length > 0) {
 
       // Create wolf at random intervals
       if (Math.random() < 0.001 && !this.wolf) {
@@ -173,6 +173,7 @@ class LandingPage extends React.Component {
           undefined,
           this.textures.wolf
         );
+      // If a wolf already exists, update it
       }else if (this.wolf) {
         this.wolf.boundaries();
         this.wolf.behaviors(this.vehicles, this.poison);
@@ -239,8 +240,37 @@ class LandingPage extends React.Component {
         }
       }
     }
+    else{
+      this.resetScene();
+    }
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  resetScene(){
+    this.food.map( (item) => {
+      this.scene.remove(item);
+    });
+
+    this.poison.map( (item) => {
+      this.scene.remove(item);
+    });
+
+    this.trees.map( (tree) => {
+      if (tree.fallingFruit.length > 1) {
+        tree.fallingFruit.map( (fruit) => {
+          this.scene.remove(fruit);
+        });
+      }
+      this.scene.remove(tree.model);
+    });
+
+    if (this.wolf) {
+      this.wolf.health = 0;
+      this.wolf.dead();
+    }
+    
+    this.initEvolution();
   }
 
   render() {

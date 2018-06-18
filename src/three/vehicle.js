@@ -3,15 +3,17 @@ import cloneGltf from '../vendor/cloneGltf';
 
 // Based on Shiffman's class: https://github.com/shiffman/The-Nature-of-Code-Examples-p5.js/blob/master/chp06_agents/NOC_6_01_Seek/vehicle.js
 
-class Vehicle {
-  constructor(model, scene, x, y, parentDna) {
 
-    this.model = model;
+// gltf, scene, mixer, x, z, dna, texture
+class Vehicle {
+  // constructor(model, scene, x, y, parentDna) {
+  constructor(gltf, scene, mixer, x, z, parentDna, texture) {
+
     this.scene = scene;
 
     this.acceleration = new THREE.Vector2( 0, 0 );
     this.velocity = new THREE.Vector2( 0, 1 );
-    this.position = new THREE.Vector2( x, y );
+    this.position = new THREE.Vector2( x, z );
     this.maxForce = 0.8;
 
     this.health = 1;
@@ -39,6 +41,10 @@ class Vehicle {
         poisonPerception: Math.random() * 1000 + 10, //poison perception
       };
     }
+
+    this.model = this.createModel(gltf, mixer, scene, x, z, this.dna, texture);
+    scene.add(this.model);
+    return this;
   }
 
   mutateGene(gene, mutationSize, mutationMin, mutationMax){
@@ -200,117 +206,93 @@ class Vehicle {
       material.opacity = this.health;
     });
   }
-}
 
-// Creates new model and then controller vehicle
-function instanceVehicle(gltf, scene, mixer, x, z, dna, texture) {
-  return new Promise(function(resolve, reject) {
-      createModel(gltf, mixer).then( (gltf) => {
-        const {vehicle, model} = createVehicle(gltf, scene, x, z, dna, texture);
-        resolve({vehicle, model});
+  // Instantiate glTF model for vehicle
+  createModel(gltf, mixer, scene, x, z, dna, texture) {
+    // return new Promise(function(resolve, reject) {
+      const clone = cloneGltf(gltf);
+
+      // Access only the character mesh (ignore glTF cam and lights)
+      const character = clone.scene.children[0];
+      character.scale.set(1, 1, 1);
+
+      // Rotate default correctly
+      character.rotateZ(Math.PI);
+
+      // Create pivot to workaround centred pivot
+      const model = new THREE.Object3D();
+      model.add(character);
+
+      model.action = mixer.clipAction( clone.animations[0], character)
+      .startAt( - Math.random() )
+      .play();
+
+      // Set initial position for model
+      model.position.set(x, 0, z);
+
+      // Set model scale relative to speed
+      // i.e slower == bigger
+      const scale = 2 * (1- dna.maxSpeed/8) + 1;
+      model.children[0].scale.set(scale, scale, scale);
+
+      // Clone texture to prevent affecting parent
+      const newTexture = texture.clone();
+      newTexture.image = texture.image;
+      newTexture.needsUpdate = true;
+      model.texture = newTexture; //store a reference to texture to give to children
+
+      // Store materials on model to reflect health status
+      model.materials = [];
+      model.children[0].traverse( (child) => {
+        if (child instanceof THREE.Mesh) {
+          const oldMaterial = child.material;
+          // Set green to full (i.e. health starts at 100%)
+          const newMaterial = new THREE.MeshPhongMaterial({skinning: true, opacity: 1, transparent: true});
+          newMaterial.name = oldMaterial.name;
+          newMaterial.map = newTexture;
+          newMaterial.map.wrapS = THREE.MirroredRepeatWrapping;
+          newMaterial.map.wrapT = THREE.MirroredRepeatWrapping;
+          newMaterial.map.repeat.set( dna.generation, dna.generation );
+          child.material = newMaterial;
+          model.materials.push(child.material);
+        }
       });
-  });
 
-}
+    // this.createHelperGuides(model, scale, dna);
 
-// Instantiate glTF model for vehicle
-function createModel(gltf, mixer) {
-  return new Promise(function(resolve, reject) {
-    const clone = cloneGltf(gltf);
-
-    // Access only the character mesh (ignore glTF cam and lights)
-    const model = clone.scene.children[0];
-    model.scale.set(1, 1, 1);
-
-    // Rotate default correctly
-    model.rotateZ(Math.PI);
-
-    // Create pivot to workaround centred pivot
-    const pivot = new THREE.Object3D();
-    pivot.add(model);
-
-    pivot.action = mixer.clipAction( clone.animations[0], model)
-        .startAt( - Math.random() )
-        .play();
-
-    resolve(pivot);
-  });
-}
-
-// Add add mixers and actions based on stored clip, add model to scene
-function createVehicle(model, scene, x, z, dna, texture){
-
-  // Set initial position for model
-  model.position.set(x, 0, z);
-
-  // Create vehicle based on model
-  const vehicle = new Vehicle(model, scene, x, z, dna);
-
-  // Set model scale relative to speed
-  // i.e slower == bigger
-  const scale = 2 * (1- vehicle.dna.maxSpeed/8) + 1;
-  model.children[0].scale.set(scale, scale, scale);
-
-  // Clone texture to prevent affecting parent
-  const newTexture = texture.clone();
-  newTexture.image = texture.image;
-  newTexture.needsUpdate = true;
-  model.texture = newTexture; //store a reference to texture to give to children
-
-  // Store materials on model to reflect health status
-  model.materials = [];
-  model.children[0].traverse( (child) => {
-    if (child instanceof THREE.Mesh) {
-      const oldMaterial = child.material;
-      // Set green to full (i.e. health starts at 100%)
-      const newMaterial = new THREE.MeshPhongMaterial({skinning: true, opacity: 1, transparent: true});
-      newMaterial.name = oldMaterial.name;
-      newMaterial.map = newTexture;
-      newMaterial.map.wrapS = THREE.MirroredRepeatWrapping;
-      newMaterial.map.wrapT = THREE.MirroredRepeatWrapping;
-      newMaterial.map.repeat.set( vehicle.dna.generation, vehicle.dna.generation );
-      child.material = newMaterial;
-      model.materials.push(child.material);
-    }
-  });
+    return model;
+  }
 
   // Visualise vehicle behaviour
-  createHelperGuides(model, scale, vehicle, );
+  createHelperGuides(model, scale, dna) {
 
-  return {vehicle, model}
+    // Add spheres indicating food/posion proclivity
+    const foodSphere = new THREE.Mesh(
+      new THREE.SphereGeometry( 10, 5, 5 ),
+      new THREE.MeshPhongMaterial( { color: new THREE.Color(0, dna.foodAttraction, 0) } )
+    );
+    foodSphere.position.set(10, 200*scale, 0);
+    model.add(foodSphere);
+
+
+    const poisonSphere = new THREE.Mesh(
+      new THREE.SphereGeometry( 10, 5, 5 ),
+      new THREE.MeshPhongMaterial( { color: new THREE.Color(dna.poisonAttraction, 0, 0) } )
+    );
+    poisonSphere.position.set(-10, 200*scale, 0);
+    model.add(poisonSphere);
+
+    const foodRadius = new THREE.Mesh(
+      new THREE.CylinderGeometry( dna.foodPerception, dna.foodPerception, 10, 10, 1, true),
+      new THREE.MeshPhongMaterial( { color: new THREE.Color(0, dna.foodAttraction, 0), opacity: 0.1, transparent: true} )
+    );
+    model.add(foodRadius);
+
+    const poisonRadius = new THREE.Mesh(
+      new THREE.CylinderGeometry( dna.poisonPerception, dna.poisonPerception, 10, 10, 1, true),
+      new THREE.MeshPhongMaterial( { color: new THREE.Color(dna.poisonAttraction, 0, 0), opacity: 0.1, transparent: true} )
+    );
+    model.add(poisonRadius);
+  }
 }
-
-// Visualise vehicle behaviour
-function createHelperGuides(model, scale, vehicle) {
-
-  // Add spheres indicating food/posion proclivity
-  const foodSphere = new THREE.Mesh(
-    new THREE.SphereGeometry( 10, 5, 5 ),
-    new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna.foodAttraction, 0) } )
-  );
-  foodSphere.position.set(10, 200*scale, 0);
-  model.add(foodSphere);
-
-
-  const poisonSphere = new THREE.Mesh(
-    new THREE.SphereGeometry( 10, 5, 5 ),
-    new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna.poisonAttraction, 0, 0) } )
-  );
-  poisonSphere.position.set(-10, 200*scale, 0);
-  model.add(poisonSphere);
-
-  const foodRadius = new THREE.Mesh(
-    new THREE.CylinderGeometry( vehicle.dna.foodPerception, vehicle.dna.foodPerception, 10, 10, 1, true),
-    new THREE.MeshPhongMaterial( { color: new THREE.Color(0, vehicle.dna.foodAttraction, 0), opacity: 0.1, transparent: true} )
-  );
-  model.add(foodRadius);
-
-  const poisonRadius = new THREE.Mesh(
-    new THREE.CylinderGeometry( vehicle.dna.poisonPerception, vehicle.dna.poisonPerception, 10, 10, 1, true),
-    new THREE.MeshPhongMaterial( { color: new THREE.Color(vehicle.dna.poisonAttraction, 0, 0), opacity: 0.1, transparent: true} )
-  );
-  model.add(poisonRadius);
-}
-
-
-export {Vehicle, instanceVehicle};
+export default Vehicle;

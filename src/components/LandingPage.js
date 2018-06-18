@@ -5,9 +5,9 @@ import GLTFLoader from '../vendor/GLTFLoader';
 
 import {createScene, loadTextures} from '../three/initThree';
 import {addFood, addPoison} from  '../three/evolution';
-import {Vehicle, instanceVehicle} from '../three/vehicle';
+import Vehicle from '../three/vehicle';
 import Tree from '../three/tree';
-
+import Wolf from '../three/wolf'
 
 class LandingPage extends React.Component {
   constructor(props) {
@@ -76,21 +76,42 @@ class LandingPage extends React.Component {
 
     this.clock = new THREE.Clock();
 
+    this.textures = {};
+
     loadTextures(['pig.jpg', 'rat.jpg', 'dog.jpg', 'human.jpg', 'donkey.jpg']).then( (imgs) => {
-      this.textures = imgs;
+      this.textures.vehicles = imgs;
 
-      // Then load fbx
-      var loader = new GLTFLoader();
-      loader.load( 'models/Walking.gltf', ( data ) => {
+      loadTextures(['wolf.jpg']).then( (wolfTexture) => {
 
-        this.gltf = data;
+        this.textures.wolf = wolfTexture[0];
 
-        this.initEvolution();
+        // Then load fbx
+        var loader = new GLTFLoader();
+        loader.load( 'models/Walking.gltf', ( data ) => {
+
+          this.gltf = data;
+
+          this.initEvolution();
+
+        });
       });
     });
   }
 
   initEvolution() {
+
+    const wolf =  new Wolf(
+      this.gltf,
+      this.scene,
+      this.mixer,
+      Math.random() * this.state.groundSize - this.state.groundSize/2,
+      Math.random() * this.state.groundSize - this.state.groundSize/2,
+      undefined,
+      this.textures.wolf
+    )
+    wolf.dna.maxSpeed = 20;
+    this.wolf = wolf;
+    console.log(this.wolf);
 
     // Create forrest
     this.trees = [];
@@ -127,18 +148,15 @@ class LandingPage extends React.Component {
 
     // // Create default vehicles
     for (var i = 0; i < 5; i++) {
-      instanceVehicle(
+      this.vehicles.push( new Vehicle(
         this.gltf,
         this.scene,
         this.mixer,
         Math.random() * this.state.groundSize - this.state.groundSize/2,
         Math.random() * this.state.groundSize - this.state.groundSize/2,
         undefined,
-        this.textures[i] //texture index
-      ).then( ({vehicle, model}) => {
-        this.scene.add(model);
-        this.vehicles.push(vehicle);
-      });
+        this.textures.vehicles[i]
+      ));
     }
 
     this.start();
@@ -153,6 +171,11 @@ class LandingPage extends React.Component {
   }
 
   renderScene() {
+
+    this.wolf.boundaries();
+    this.wolf.behaviors(this.food, this.poison);
+    this.wolf.update();
+    this.wolf.display();
 
     // If vehicles are loaded and food or poison are still available
     if (this.vehicles.length > 0 && (this.food.length > 0 || this.poison.length > 0)) {
@@ -200,7 +223,7 @@ class LandingPage extends React.Component {
           this.vehicles[i].display();
 
           if (this.vehicles[i].clone()) {
-            instanceVehicle(
+            this.vehicles.push( new Vehicle(
               this.gltf,
               this.scene,
               this.mixer,
@@ -208,10 +231,7 @@ class LandingPage extends React.Component {
               this.vehicles[i].position.y,
               this.vehicles[i].dna,
               this.vehicles[i].model.texture
-            ).then( ({vehicle, model}) => {
-              this.scene.add(model);
-              this.vehicles.push(vehicle);
-            });
+            ));
           }
         }
         else{

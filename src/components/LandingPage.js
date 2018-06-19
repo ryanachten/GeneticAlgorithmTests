@@ -4,10 +4,10 @@ import $ from 'jquery';
 import GLTFLoader from '../vendor/GLTFLoader';
 
 import {createScene, loadTextures} from '../three/initThree';
-import {addFood, addPoison} from  '../three/evolution';
-import Vehicle from '../three/vehicle';
-import Tree from '../three/tree';
-import Wolf from '../three/wolf'
+import {addFood, addPoison} from  '../three/food';
+import Vehicle from '../three/Vehicle';
+import Tree from '../three/Tree';
+import Wolf from '../three/Wolf'
 
 class LandingPage extends React.Component {
   constructor(props) {
@@ -269,7 +269,7 @@ class LandingPage extends React.Component {
       this.wolf.health = 0;
       this.wolf.dead();
     }
-    
+
     this.initEvolution();
   }
 

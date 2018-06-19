@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import Vehicle from './vehicle';
+import Vehicle from './Vehicle';
 import cloneGltf from '../vendor/cloneGltf';
 
 class Wolf extends Vehicle{

@@ -103,13 +103,8 @@ class LandingPage extends React.Component {
     // Create forrest
     this.trees = [];
     for (var i = 0; i < 5; i++) {
-      const tree = new Tree(this.state.groundSize);
-      this.scene.add(tree.create());
-      const fruits = tree.createFruit();
-      fruits.map( (fruit) => {
-        this.scene.add(fruit);
-      });
-      this.trees.push(tree);
+      const tree = new Tree(this.state.groundSize, this.scene);
+      this.trees.push(tree.create());
     }
 
     const foodCount = 20;
@@ -185,21 +180,22 @@ class LandingPage extends React.Component {
       }
 
       // Update forrest
-      this.trees.map( (tree) => {
-        if (Math.random() < 0.001 && tree.fallingFruit.length === 0) {
-          const fruits = tree.createFruit();
-          fruits.map( (fruit) => {
-            this.scene.add(fruit);
-          });
-        }
-        if (tree.fallenFruit.length > 0) {
-          for (var i = 0; i < tree.fallenFruit.length; i++) {
-            this.food.push(tree.fallenFruit[i]);
-            tree.fallenFruit.splice(i, 1);
+      for (var i = 0; i < this.trees.length; i++) {
+        const tree = this.trees[i];
+        if (!tree.dead()) {
+          tree.update();
+          if (tree.fallenFruit.length > 0) {
+            for (var i = 0; i < tree.fallenFruit.length; i++) {
+              this.food.push(tree.fallenFruit[i]);
+              tree.fallenFruit.splice(i, 1);
+            }
           }
         }
-        tree.update();
-      });
+      }
+      if (Math.random() < 0.0001) {
+        const tree = new Tree(this.state.groundSize, this.scene);
+        this.trees.push(tree.create());
+      }
 
       // Update model animation
       this.mixer.update( this.clock.getDelta() );

@@ -132,7 +132,7 @@ class Wolf extends Vehicle{
       }
     });
 
-    this.createHelperGuides(model, scale, dna);
+    // this.createHelperGuides(model, scale, dna);
 
     return model;
   }

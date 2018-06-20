@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 class Tree {
-  constructor(groundSize) {
+  constructor(groundSize, scene) {
     this.width = Math.random() * 1000 + 200;
     this.height = Math.random() * 1000 + 500;
     this.x = Math.random() * (groundSize - (this.width*2 +100)) - (groundSize - (this.width*2 +100))/2;
@@ -9,19 +9,21 @@ class Tree {
     this.fallingFruit = [];
     this.fallenFruit = [];
     this.model = undefined;
+    this.health = 1.0;
+    this.scene = scene;
   }
 
   create(){
     const trunk = new THREE.Mesh(
       new THREE.CylinderGeometry(this.width/10, this.width/8, this.height, 8, 1, true),
-      new THREE.MeshPhongMaterial({ color: 0x00B99A, transparent: true, opacity: 0.5  })
+      new THREE.MeshPhongMaterial({ color: 0xcd9465, transparent: true, opacity: 0.5  })
     );
     trunk.name = 'trunk';
 
 
     const treeTop = new THREE.Mesh(
       new THREE.ConeGeometry(this.width, this.height/4, 10),
-      new THREE.MeshPhongMaterial({ color: 0x00B99A, transparent: true, opacity: 0.5 })
+      new THREE.MeshPhongMaterial({ color: new THREE.Color('hsl(170, 100%, 36%)'), transparent: true, opacity: 0.5 })
     );
     treeTop.position.y += this.height/2;
     treeTop.name = 'treeTop';
@@ -32,11 +34,13 @@ class Tree {
     treeObj.position.set(this.x, 0, this.z);
     treeObj.position.y += this.height/2; //align with ground level
     treeObj.updateMatrixWorld(); //update child matricies
+    this.scene.add(treeObj);
 
     this.trunk = trunk;
     this.treeTop = treeTop;
     this.model = treeObj;
-    return treeObj;
+
+    return this;
   }
 
   createFruit(){
@@ -59,6 +63,7 @@ class Tree {
 
         fruit.position.copy(vertPos);
         fruit.position.y = (this.height - fruitSize);
+        this.scene.add(fruit);
         fruits.push(fruit);
       }
     }
@@ -80,8 +85,30 @@ class Tree {
     }
   }
 
+  dead(){
+    if (this.health <= 0) {
+      if (this.fallingFruit.length > 1) {
+        this.fallingFruit.map( (fruit) => {
+          this.scene.remove(fruit);
+        });
+      }
+      this.scene.remove(this.model);
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
+
   update(){
+    this.health -= 0.0001;
     this.treeTop.rotation.y += 0.001;
+
+    this.model.children[1].material.color.setHSL(0.472,this.health,0.36);
+
+    if (Math.random() < 0.001 && this.fallingFruit.length === 0) {
+      this.createFruit();
+    }
 
     if (this.fallingFruit.length > 0) {
       this.fruitFall();

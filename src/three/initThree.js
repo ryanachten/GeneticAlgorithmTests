@@ -27,6 +27,7 @@ export const createScene = (groundSize) => {
   );
   ground.rotation.x = - Math.PI / 2;
   ground.receiveShadow = true;
+  ground.name = 'ground';
   scene.add( ground );
 
   const grid = new THREE.GridHelper( groundSize, 20, 0x000000, 0x000000 );

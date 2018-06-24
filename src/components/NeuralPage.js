@@ -66,12 +66,6 @@ class NeuralPage extends React.Component {
     this.camera = camera;
     this.scene = scene;
 
-    // Move everything over to match p5's coordinate space
-    // (0,0) in top left corner
-    scene.children[2].position.set(this.state.groundSize/2, 0, this.state.groundSize/2);
-    scene.children[3].position.set(this.state.groundSize/2, 0, this.state.groundSize/2);
-    camera.position.set(this.state.groundSize/2, 2500, this.state.groundSize/2);
-
     this.renderer = renderer;
     this.mount.appendChild(this.renderer.domElement);
 
@@ -80,7 +74,7 @@ class NeuralPage extends React.Component {
 
   // Describes division line
   line(x){
-    let y = 0.3 * x + 0.4;
+    let y = 0.8 * x + 0.4;
     return y;
   }
 
@@ -150,13 +144,13 @@ class NeuralPage extends React.Component {
     }
 
     // Draw known line
-    const x1 = this.map(this.xMin, this.xMin, this.xMax, 0, this.state.groundSize);
+    const x1 = this.map(this.xMin, this.xMin, this.xMax, -this.state.groundSize/2, this.state.groundSize/2);
 
-    const y1 = this.map(this.line(this.xMin), this.yMin, this.yMax, this.state.groundSize, 0);
+    const y1 = this.map(this.line(this.xMin), this.yMin, this.yMax, this.state.groundSize/2, -this.state.groundSize/2);
 
-    const x2 = this.map(this.xMax, this.xMin, this.xMax, 0, this.state.groundSize);
+    const x2 = this.map(this.xMax, this.xMin, this.xMax, -this.state.groundSize/2, this.state.groundSize/2);
 
-    const y2 = this.map(this.line(this.xMax), this.yMin, this.yMax, this.state.groundSize, 0);
+    const y2 = this.map(this.line(this.xMax), this.yMin, this.yMax, this.state.groundSize/2, -this.state.groundSize/2);
 
     this.drawLine('red', x1, y1, x2, y2);
 
@@ -178,16 +172,17 @@ class NeuralPage extends React.Component {
   renderScene() {
 
     // Calc line coords based on weights
+    // Formula is weights[0]*x + weights[1]*y + weights[2] (i.e. bias) = 0
     let weights = this.ptron.weights;
     let x1 = this.xMin;
     let y1 = (-weights[2] - weights[0] * x1) / weights[1];
     let x2 = this.xMax;
     let y2 = (-weights[2] - weights[0] * x2) / weights[1];
 
-    x1 = this.map(x1, this.xMin, this.xMax, 0, this.state.groundSize);
-    y1 = this.map(y1, this.yMin, this.yMax, this.state.groundSize, 0);
-    x2 = this.map(x2, this.xMin, this.xMax, 0, this.state.groundSize);
-    y2 = this.map(y2, this.yMin, this.yMax, this.state.groundSize, 0);
+    x1 = this.map(x1, this.xMin, this.xMax, -this.state.groundSize/2, this.state.groundSize/2);
+    y1 = this.map(y1, this.yMin, this.yMax, this.state.groundSize/2, -this.state.groundSize/2);
+    x2 = this.map(x2, this.xMin, this.xMax, -this.state.groundSize/2, this.state.groundSize/2);
+    y2 = this.map(y2, this.yMin, this.yMax, this.state.groundSize/2, -this.state.groundSize/2);
 
 
     // Update line vectors based on weight coords
@@ -208,8 +203,8 @@ class NeuralPage extends React.Component {
       }else{
         this.training[i].mesh.material.color = new THREE.Color('green');
       }
-      const x = this.map(this.training[i].input[0], this.xMin, this.xMax, 0, this.state.groundSize);
-      const y = this.map(this.training[i].input[1], this.yMin, this.yMax, this.state.groundSize, 0);
+      const x = this.map(this.training[i].input[0], this.xMin, this.xMax, -this.state.groundSize/2, this.state.groundSize/2);
+      const y = this.map(this.training[i].input[1], this.yMin, this.yMax, this.state.groundSize/2, -this.state.groundSize/2);
 
       this.training[i].mesh.position.set(x, 0, y);
     }

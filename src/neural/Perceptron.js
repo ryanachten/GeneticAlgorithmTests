@@ -1,3 +1,5 @@
+// Based on Shiffman's course: https://github.com/shiffman/The-Nature-of-Code-Examples-p5.js/tree/master/chp10_nn/NOC_10_01_Perceptron
+
 class Perceptron {
 
   constructor(n, learningRate) {

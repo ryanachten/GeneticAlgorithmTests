@@ -3,7 +3,8 @@ import * as THREE from 'three';
 import $ from 'jquery';
 import {createScene} from '../three/initThree';
 import Perceptron from '../neural/Perceptron';
-import Point from '../neural/training';
+import NeuralNetwork from '../neural/NeuralNetwork';
+import Matrix from '../neural/Matrix';
 
 class NeuralPage extends React.Component {
 
@@ -69,7 +70,21 @@ class NeuralPage extends React.Component {
     this.renderer = renderer;
     this.mount.appendChild(this.renderer.domElement);
 
-    this.initTraining();
+    const nn = new NeuralNetwork(3, 4, 2);
+    console.log(nn);
+
+    const m = new Matrix(3, 2);
+    m.randomise();
+    console.table(m.matrix);
+
+    const m2 = new Matrix(2, 3);
+    m2.randomise();
+    console.table(m2.matrix);
+
+    const p = Matrix.product(m, m2);
+    console.table(p.matrix);
+
+    // this.initTraining();
   }
 
   // Describes division line

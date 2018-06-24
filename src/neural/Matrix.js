@@ -68,7 +68,7 @@ class Matrix {
     if (a.cols !== b.rows) {
       throw new Error('Columns in matrix A must match rows in matrix B');
     }else{
-      let result = new Matrix(a.cols, b.rows);
+      const result = new Matrix(a.cols, b.rows);
       for (var i = 0; i < result.cols; i++) {
         for (var j = 0; j < result.rows; j++) {
           // Compute dot product of values in column
@@ -81,6 +81,17 @@ class Matrix {
       }
       return result;
     }
+  }
+
+  // Produce transposed matrix (where rows and columns are swapped around)
+  static transpose(m){
+    const result = new Matrix(m.cols, m.rows);
+    for (var i = 0; i < m.rows; i++) {
+      for (var j = 0; j < m.cols; j++) {
+        result.matrix[j][i] = m.matrix[i][j];
+      }
+    }
+    return result;
   }
 }
 

@@ -77,11 +77,11 @@ class NeuralPage extends React.Component {
     m.randomise();
     console.table(m.matrix);
 
-    const m2 = new Matrix(2, 3);
-    m2.randomise();
-    console.table(m2.matrix);
+    // const m2 = new Matrix(2, 3);
+    // m2.randomise();
+    // console.table(m2.matrix);
 
-    const p = Matrix.product(m, m2);
+    const p = Matrix.transpose(m);
     console.table(p.matrix);
 
     // this.initTraining();

@@ -2,12 +2,12 @@ class Matrix {
   constructor(rows, cols) {
     this.rows = rows;
     this.cols = cols;
-    this.matrix = [];
+    this.data = [];
 
     for (var i = 0; i < this.rows; i++) {
-      this.matrix[i] = [];
+      this.data[i] = [];
       for (var j = 0; j < this.cols; j++) {
-        this.matrix[i][j] = 0;
+        this.data[i][j] = 0;
       }
     }
   }
@@ -15,9 +15,9 @@ class Matrix {
   // Populate matrix with random values
   randomise(){
     for (var i = 0; i < this.rows; i++) {
-      this.matrix[i] = [];
+      this.data[i] = [];
       for (var j = 0; j < this.cols; j++) {
-        this.matrix[i][j] = Math.floor(Math.random() * 10);
+        this.data[i][j] = Math.floor(Math.random() * 10);
       }
     }
   }
@@ -27,7 +27,7 @@ class Matrix {
     if (n instanceof Matrix) {
       for (var i = 0; i < this.rows; i++) {
         for (var j = 0; j < this.cols; j++) {
-          this.matrix[i][j] += n.matrix[i][j];
+          this.data[i][j] += n.data[i][j];
         }
       }
     }
@@ -35,7 +35,7 @@ class Matrix {
     else{
       for (var i = 0; i < this.rows; i++) {
         for (var j = 0; j < this.cols; j++) {
-          this.matrix[i][j] += n;
+          this.data[i][j] += n;
         }
       }
     }
@@ -48,7 +48,7 @@ class Matrix {
     if (n instanceof Matrix) {
       for (var i = 0; i < this.rows; i++) {
         for (var j = 0; j < this.cols; j++) {
-          this.matrix[i][j] *= n.matrix[i][j];
+          this.data[i][j] *= n.data[i][j];
         }
       }
     }
@@ -56,8 +56,19 @@ class Matrix {
     else{
       for (var i = 0; i < this.rows; i++) {
         for (var j = 0; j < this.cols; j++) {
-          this.matrix[i][j] *= n;
+          this.data[i][j] *= n;
         }
+      }
+    }
+  }
+
+  // Apply a function to every matrix element
+  // Note: function argument must return result
+  map(fn){
+    for (var i = 0; i < this.rows; i++) {
+      for (var j = 0; j < this.cols; j++) {
+        const val = this.data[i][j];
+        this.data[i][j] = fn(val);
       }
     }
   }
@@ -74,9 +85,9 @@ class Matrix {
           // Compute dot product of values in column
           let sum = 0;
           for (var k = 0; k < a.cols; k++) {
-            sum += a.matrix[i][k] * b.matrix[k][j]
+            sum += a.data[i][k] * b.data[k][j]
           }
-          result.matrix[i][j] = sum;
+          result.data[i][j] = sum;
         }
       }
       return result;
@@ -88,10 +99,14 @@ class Matrix {
     const result = new Matrix(m.cols, m.rows);
     for (var i = 0; i < m.rows; i++) {
       for (var j = 0; j < m.cols; j++) {
-        result.matrix[j][i] = m.matrix[i][j];
+        result.data[j][i] = m.data[i][j];
       }
     }
     return result;
+  }
+
+  print(){
+    console.table(this.data);
   }
 }
 

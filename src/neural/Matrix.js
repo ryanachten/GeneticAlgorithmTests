@@ -4,9 +4,9 @@ class Matrix {
     this.cols = cols;
     this.data = [];
 
-    for (var i = 0; i < this.rows; i++) {
+    for (let i = 0; i < this.rows; i++) {
       this.data[i] = [];
-      for (var j = 0; j < this.cols; j++) {
+      for (let j = 0; j < this.cols; j++) {
         this.data[i][j] = 0;
       }
     }
@@ -14,10 +14,10 @@ class Matrix {
 
   // Populate matrix with random values
   randomise(){
-    for (var i = 0; i < this.rows; i++) {
+    for (let i = 0; i < this.rows; i++) {
       this.data[i] = [];
-      for (var j = 0; j < this.cols; j++) {
-        this.data[i][j] = Math.floor(Math.random() * 10);
+      for (let j = 0; j < this.cols; j++) {
+        this.data[i][j] = Math.random() * 2 -1;
       }
     }
   }
@@ -25,16 +25,16 @@ class Matrix {
   add(n){
     // If object to be added is a matrix
     if (n instanceof Matrix) {
-      for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.cols; j++) {
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
           this.data[i][j] += n.data[i][j];
         }
       }
     }
     // If object to be added is a scalar
     else{
-      for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.cols; j++) {
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
           this.data[i][j] += n;
         }
       }
@@ -46,16 +46,16 @@ class Matrix {
     // If object to be multiplied is a matrix (Schur / Hadamard product)
     // Note: rows and cols need to be of the same number
     if (n instanceof Matrix) {
-      for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.cols; j++) {
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
           this.data[i][j] *= n.data[i][j];
         }
       }
     }
     // If object to be multiplied is a scalar
     else{
-      for (var i = 0; i < this.rows; i++) {
-        for (var j = 0; j < this.cols; j++) {
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
           this.data[i][j] *= n;
         }
       }
@@ -65,12 +65,32 @@ class Matrix {
   // Apply a function to every matrix element
   // Note: function argument must return result
   map(fn){
-    for (var i = 0; i < this.rows; i++) {
-      for (var j = 0; j < this.cols; j++) {
+    for (let i = 0; i < this.rows; i++) {
+      for (let j = 0; j < this.cols; j++) {
         const val = this.data[i][j];
         this.data[i][j] = fn(val);
       }
     }
+  }
+
+  // Takes an array and returns a matrix
+  static fromArray(arr){
+    const m = new Matrix(arr.length, 1);
+    for (let i = 0; i < arr.length; i++) {
+      m.data[i][0] = arr[i];
+    }
+    return m;
+  }
+
+  // Returns an array from the current matri
+  toArray(){
+    const arr = [];
+    for (let i = 0; i < this.rows; i++) {
+      for (let j = 0; j < this.cols; j++) {
+        arr.push(this.data[i][j]);
+      }
+    }
+    return arr;
   }
 
   // Produces matrix product based on two matricies
@@ -79,13 +99,13 @@ class Matrix {
     if (a.cols !== b.rows) {
       throw new Error('Columns in matrix A must match rows in matrix B');
     }else{
-      const result = new Matrix(a.cols, b.rows);
-      for (var i = 0; i < result.cols; i++) {
-        for (var j = 0; j < result.rows; j++) {
+      const result = new Matrix(a.rows, b.cols);
+      for (let i = 0; i < result.rows; i++) {
+        for (let j = 0; j < result.cols; j++) {
           // Compute dot product of values in column
           let sum = 0;
-          for (var k = 0; k < a.cols; k++) {
-            sum += a.data[i][k] * b.data[k][j]
+          for (let k = 0; k < a.cols; k++) {
+            sum += a.data[i][k] * b.data[k][j];
           }
           result.data[i][j] = sum;
         }
@@ -97,8 +117,8 @@ class Matrix {
   // Produce transposed matrix (where rows and columns are swapped around)
   static transpose(m){
     const result = new Matrix(m.cols, m.rows);
-    for (var i = 0; i < m.rows; i++) {
-      for (var j = 0; j < m.cols; j++) {
+    for (let i = 0; i < m.rows; i++) {
+      for (let j = 0; j < m.cols; j++) {
         result.data[j][i] = m.data[i][j];
       }
     }

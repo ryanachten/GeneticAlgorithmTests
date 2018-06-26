@@ -72,8 +72,10 @@ class NeuralPage extends React.Component {
 
     const nn = new NeuralNetwork(2, 2, 1);
     const input = [1, 0];
-    const output = nn.feedForward(input);
-    console.log(output);
+    const target = [1];
+    // const output = nn.feedForward(input);
+    nn.train(input, target);
+    // console.log(output);
 
     // this.initTraining();
   }

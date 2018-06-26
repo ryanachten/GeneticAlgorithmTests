@@ -73,6 +73,19 @@ class Matrix {
     }
   }
 
+  // Return new matrix where a function is appllied to every matrix element
+  // Note: function argument must return result
+  static map(m, fn){
+    const result = new Matrix(m.rows, m.cols);
+    for (let i = 0; i < m.rows; i++) {
+      for (let j = 0; j < m.cols; j++) {
+        const val = m.data[i][j];
+        result.data[i][j] = fn(val);
+      }
+    }
+    return result;    
+  }
+
   // Takes an array and returns a matrix
   static fromArray(arr){
     const m = new Matrix(arr.length, 1);
@@ -82,7 +95,7 @@ class Matrix {
     return m;
   }
 
-  // Returns an array from the current matri
+  // Returns an array from the current matrix
   toArray(){
     const arr = [];
     for (let i = 0; i < this.rows; i++) {
@@ -91,6 +104,17 @@ class Matrix {
       }
     }
     return arr;
+  }
+
+  // Returns new matrix from a-b (element-wise)
+  static subtract(a, b){
+    const result = new Matrix(a.rows, b.cols);
+    for (let i = 0; i < result.rows; i++) {
+      for (let j = 0; j < result.cols; j++) {
+        result.data[i][j] = a.data[i][j] - b.data[i][j];
+      }
+    }
+    return result;
   }
 
   // Produces matrix product based on two matricies
